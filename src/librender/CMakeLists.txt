@@ -60,6 +60,7 @@ add_library(mitsuba-render-obj OBJECT
   shape.cpp        ${INC_DIR}/shape.h
   shapegroup.cpp   ${INC_DIR}/shapegroup.h
   texture.cpp      ${INC_DIR}/texture.h
+  transientintegrator.cpp ${INC_DIR}/transientintegrator.h
   spiral.cpp       ${INC_DIR}/spiral.h
   srgb.cpp         ${INC_DIR}/srgb.h
                    ${INC_DIR}/optix/common.h
