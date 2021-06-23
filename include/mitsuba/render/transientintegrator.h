@@ -26,7 +26,7 @@ public:
     MTS_IMPORT_TYPES(Scene, Sensor)
 
     /// Perform the main rendering job. Returns \c true upon success
-    virtual bool render(Scene *scene, Sensor *sensor) override = 0;
+    bool render(Scene *scene, Sensor *sensor) override = 0;
 
     /**
      * \brief Cancel a running render job
@@ -35,7 +35,7 @@ public:
      * job. In this case, \ref render() will quit with a return value of \c
      * false.
      */
-    virtual void cancel() = 0;
+    void cancel() override = 0;
 
     MTS_DECLARE_CLASS()
 protected:
@@ -94,12 +94,14 @@ public:
      * active)
      *    </tt>
      */
-    virtual std::pair<Spectrum, Mask> sample(const Scene *scene,
-                                             Sampler *sampler,
-                                             const RayDifferential3f &ray,
-                                             const Medium *medium = nullptr,
-                                             Float *aovs = nullptr,
-                                             Mask active = true) const;
+    virtual void sample(const Scene *scene,
+                        Sampler *sampler,
+                        const RayDifferential3f &ray,
+                        const Medium *medium = nullptr,
+                        Float *aovs = nullptr,
+                        std::vector<std::tuple<Spectrum, Mask, Float>> &radianceSamplesRecordVector = {},
+                        std::pair<Spectrum, Mask> &radiance = {},
+                        Mask active = true) const;
 
     /**
      * For integrators that return one or more arbitrary output variables

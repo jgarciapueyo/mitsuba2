@@ -3,8 +3,8 @@
 #include <mitsuba/core/ray.h>
 #include <mitsuba/render/bsdf.h>
 #include <mitsuba/render/emitter.h>
-#include <mitsuba/render/transientintegrator.h>
 #include <mitsuba/render/records.h>
+#include <mitsuba/render/transientintegrator.h>
 #include <random>
 
 NAMESPACE_BEGIN(mitsuba)
@@ -17,10 +17,14 @@ public:
 
     TransientPathIntegrator(const Properties &props) : Base(props) {}
 
-    std::pair<Spectrum, Mask> sample(const Scene *scene, Sampler *sampler,
-                const RayDifferential3f &ray_, const Medium * /* medium */,
-                Float * /* aovs */, Mask active) const override {
+    void sample(const Scene *scene, Sampler *sampler, const RayDifferential3f &ray_,
+                const Medium * /* medium */, Float * /* aovs */,
+                std::vector<std::tuple<Spectrum, Mask, Float>> &radianceSamplesRecordVector,
+                std::pair<Spectrum, Mask> &radiance,
+                Mask active) const override {
         MTS_MASKED_FUNCTION(ProfilerPhase::SamplingIntegratorSample, active);
+
+        Float t = 0.f;
 
         RayDifferential3f ray = ray_;
 
@@ -39,12 +43,16 @@ public:
         EmitterPtr emitter      = si.emitter(scene);
 
         for (int depth = 1;; ++depth) {
+            t += si.distance(ray); //TODO: ior
 
             // ---------------- Intersection with emitters ----------------
 
-            if (any_or<true>(neq(emitter, nullptr)))
-                result[active] +=
-                    emission_weight * throughput * emitter->eval(si, active);
+            if (any_or<true>(neq(emitter, nullptr))) {
+                result[active] += emission_weight * throughput * emitter->eval(si, active);
+                Spectrum temp(0.f);
+                temp[active] = emission_weight * throughput * emitter->eval(si, active);
+                radianceSamplesRecordVector.emplace_back(temp, valid_ray, t);
+            }
 
             active &= si.is_valid();
 
@@ -69,14 +77,14 @@ public:
             // --------------------- Emitter sampling ---------------------
 
             BSDFContext ctx;
-            BSDFPtr bsdf = si.bsdf(ray);
-            Mask active_e =
-                active && has_flag(bsdf->flags(), BSDFFlags::Smooth);
+            BSDFPtr bsdf  = si.bsdf(ray);
+            Mask active_e = active && has_flag(bsdf->flags(), BSDFFlags::Smooth);
 
             if (likely(any_or<true>(active_e))) {
-                auto [ds, emitter_val] = scene->sample_emitter_direction(
-                    si, sampler->next_2d(active_e), true, active_e);
+                auto [ds, emitter_val] =
+                    scene->sample_emitter_direction(si, sampler->next_2d(active_e), true, active_e);
                 active_e &= neq(ds.pdf, 0.f);
+                Float ts = ds.dist;
 
                 // Query the BSDF for that emitter-sampled direction
                 Vector3f wo       = si.to_local(ds.d);
@@ -88,15 +96,18 @@ public:
                 Float bsdf_pdf = bsdf->pdf(ctx, si, wo, active_e);
 
                 Float mis = select(ds.delta, 1.f, mis_weight(ds.pdf, bsdf_pdf));
+                Spectrum temp(0.f);
+                temp[active_e] = mis * throughput * bsdf_val * emitter_val;
                 result[active_e] += mis * throughput * bsdf_val * emitter_val;
+                if(likely(any_or<true>(active_e)))
+                    radianceSamplesRecordVector.emplace_back(temp, valid_ray, ts + t);
             }
 
             // ----------------------- BSDF sampling ----------------------
 
             // Sample BSDF * cos(theta)
             auto [bs, bsdf_val] =
-                bsdf->sample(ctx, si, sampler->next_1d(active),
-                             sampler->next_2d(active), active);
+                bsdf->sample(ctx, si, sampler->next_1d(active), sampler->next_2d(active), active);
             bsdf_val = si.to_world_mueller(bsdf_val, -bs.wo, si.wi);
 
             throughput = throughput * bsdf_val;
@@ -118,8 +129,7 @@ public:
 
             if (any_or<true>(neq(emitter, nullptr))) {
                 Float emitter_pdf =
-                    select(neq(emitter, nullptr) &&
-                               !has_flag(bs.sampled_type, BSDFFlags::Delta),
+                    select(neq(emitter, nullptr) && !has_flag(bs.sampled_type, BSDFFlags::Delta),
                            scene->pdf_emitter_direction(si, ds), 0.f);
 
                 emission_weight = mis_weight(bs.pdf, emitter_pdf);
@@ -128,7 +138,13 @@ public:
             si = std::move(si_bsdf);
         }
 
-        return { result, valid_ray };
+        Spectrum resultRecord = 0.f;
+        for (const auto &radianceDistance : radianceSamplesRecordVector) {
+            Float distance = std::get<2>(radianceDistance);
+            resultRecord += select((1800.f < distance) & (distance < 2000.f), std::get<0>(radianceDistance), 0.f);
+        }
+
+        radiance = { resultRecord, valid_ray };
     }
 
     //! @}

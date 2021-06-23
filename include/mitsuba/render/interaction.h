@@ -199,6 +199,11 @@ struct SurfaceInteraction : Interaction<Float_, Spectrum_> {
                                      shape->interior_medium());
     }
 
+    // TODO: fill the description
+    Float distance(const Ray3f &ray) {
+        return norm(p - ray.o);
+    }
+
     /**
      * \brief Returns the BSDF of the intersected shape.
      *

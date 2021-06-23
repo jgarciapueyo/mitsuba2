@@ -47,6 +47,13 @@ Release
 /.vs
 /x64
 
+# CLION
+cmake-build-debug-clang
+cmake-build-debug-ninja
+cmake-build-release-clang
+cmake-build-release-ninja
+.idea
+
 # Python
 __pycache__
 *.pyc

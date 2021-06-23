@@ -21,7 +21,7 @@ NAMESPACE_BEGIN(mitsuba)
 MTS_VARIANT TransientIntegrator<Float, Spectrum>::TransientIntegrator(const Properties &props)
     : Base(props) {}
 
-MTS_VARIANT TransientIntegrator<Float, Spectrum>::~TransientIntegrator() { }
+MTS_VARIANT TransientIntegrator<Float, Spectrum>::~TransientIntegrator() = default;
 
 // -----------------------------------------------------------------------------
 
@@ -43,7 +43,7 @@ MTS_VARIANT TransientSamplingIntegrator<Float, Spectrum>::TransientSamplingInteg
     m_hide_emitters = props.bool_("hide_emitters", false);
 }
 
-MTS_VARIANT TransientSamplingIntegrator<Float, Spectrum>::~TransientSamplingIntegrator() { }
+MTS_VARIANT TransientSamplingIntegrator<Float, Spectrum>::~TransientSamplingIntegrator() = default;
 
 MTS_VARIANT void TransientSamplingIntegrator<Float, Spectrum>::cancel() {
     m_stop = true;
@@ -266,10 +266,13 @@ TransientSamplingIntegrator<Float, Spectrum>::render_sample(const Scene *scene,
     ray.scale_differential(diff_scale_factor);
 
     const Medium *medium = sensor->medium();
-    std::pair<Spectrum, Mask> result = sample(scene, sampler, ray, medium, aovs + 5, active);
-    result.first = ray_weight * result.first;
+    // TR std::pair<Spectrum, Mask> result = sample(scene, sampler, ray, medium, aovs + 5, active);
+    std::pair<Spectrum, Mask> radiance;
+    std::vector<std::tuple<Spectrum, Mask, Float>> radianceSamplesRecordVector;
+    sample(scene, sampler, ray, medium, aovs + 5, radianceSamplesRecordVector, radiance, active);
+    radiance.first = ray_weight * radiance.first;
 
-    UnpolarizedSpectrum spec_u = depolarize(result.first);
+    UnpolarizedSpectrum spec_u = depolarize(radiance.first);
 
     Color3f xyz;
     if constexpr (is_monochromatic_v<Spectrum>) {
@@ -284,7 +287,7 @@ TransientSamplingIntegrator<Float, Spectrum>::render_sample(const Scene *scene,
     aovs[0] = xyz.x();
     aovs[1] = xyz.y();
     aovs[2] = xyz.z();
-    aovs[3] = select(result.second, Float(1.f), Float(0.f));
+    aovs[3] = select(radiance.second, Float(1.f), Float(0.f));
     aovs[4] = 1.f;
 
     block->put(position_sample, aovs, active);
@@ -292,12 +295,14 @@ TransientSamplingIntegrator<Float, Spectrum>::render_sample(const Scene *scene,
     sampler->advance();
 }
 
-MTS_VARIANT std::pair<Spectrum, typename TransientSamplingIntegrator<Float, Spectrum>::Mask>
+MTS_VARIANT void
 TransientSamplingIntegrator<Float, Spectrum>::sample(const Scene * /* scene */,
                                             Sampler * /* sampler */,
                                             const RayDifferential3f & /* ray */,
                                             const Medium * /* medium */,
                                             Float * /* aovs */,
+                                            std::vector<std::tuple<Spectrum, Mask, Float>> & /* radianceSamplesRecordVector */,
+                                            std::pair<Spectrum, Mask> & /* radiance */,
                                             Mask /* active */) const {
     NotImplementedError("sample");
 }
@@ -319,7 +324,7 @@ MTS_VARIANT TransientMonteCarloIntegrator<Float, Spectrum>::TransientMonteCarloI
         Throw("\"max_depth\" must be set to -1 (infinite) or a value >= 0");
 }
 
-MTS_VARIANT TransientMonteCarloIntegrator<Float, Spectrum>::~TransientMonteCarloIntegrator() { }
+MTS_VARIANT TransientMonteCarloIntegrator<Float, Spectrum>::~TransientMonteCarloIntegrator() = default;
 
 MTS_IMPLEMENT_CLASS_VARIANT(TransientIntegrator, Integrator)
 MTS_IMPLEMENT_CLASS_VARIANT(TransientSamplingIntegrator, TransientIntegrator)
