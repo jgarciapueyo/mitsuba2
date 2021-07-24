@@ -23,6 +23,10 @@
 #endif
 
 
+static const char *__doc_EmptySbtRecord = R"doc()doc";
+
+static const char *__doc_EmptySbtRecord_header = R"doc()doc";
+
 static const char *__doc_OptixHitGroupData = R"doc(Stores information about a Shape on the Optix side)doc";
 
 static const char *__doc_OptixHitGroupData_data = R"doc(Pointer to the memory region of Shape data (e.g. ``OptixMeshData`` ))doc";
@@ -59,6 +63,8 @@ static const char *__doc_OptixParams_out_dp_dv = R"doc(Output surface interactio
 
 static const char *__doc_OptixParams_out_hit = R"doc(Output boolean data pointer for ray_test)doc";
 
+static const char *__doc_OptixParams_out_inst_index = R"doc()doc";
+
 static const char *__doc_OptixParams_out_ng = R"doc(Output surface interaction data pointers)doc";
 
 static const char *__doc_OptixParams_out_ns = R"doc(Output surface interaction data pointers)doc";
@@ -74,6 +80,12 @@ static const char *__doc_OptixParams_out_shape_ptr = R"doc()doc";
 static const char *__doc_OptixParams_out_t = R"doc(Output surface interaction data pointers)doc";
 
 static const char *__doc_OptixParams_out_uv = R"doc(Output surface interaction data pointers)doc";
+
+static const char *__doc_SbtRecord = R"doc()doc";
+
+static const char *__doc_SbtRecord_data = R"doc()doc";
+
+static const char *__doc_SbtRecord_header = R"doc()doc";
 
 static const char *__doc_enoki_operator_lshift = R"doc(Prints the canonical representation of a PCG32 object.)doc";
 
@@ -2724,7 +2736,8 @@ at the construction of the block.
 Parameter ``pos``:
     Denotes the sample position in fractional pixel coordinates. It is
     not checked, and so must be valid. The block's offset is
-    subtracted from the given position to obtain the
+    subtracted from the given position to obtain the final pixel
+    position.
 
 Parameter ``wavelengths``:
     Sample wavelengths in nanometers
@@ -2749,7 +2762,8 @@ provided when the block was constructed.
 Parameter ``pos``:
     Denotes the sample position in fractional pixel coordinates. It is
     not checked, and so must be valid. The block's offset is
-    subtracted from the given position to obtain the
+    subtracted from the given position to obtain the final pixel
+    position.
 
 Parameter ``value``:
     Pointer to an array containing each channel of the sample values.
@@ -3927,6 +3941,22 @@ Remark:
 See also:
     TraversalCallback)doc";
 
+static const char *__doc_mitsuba_OptixAccelData =
+R"doc(Stores two OptiXTraversables: one for the meshes and one for the
+custom shapes (e.g. sphere))doc";
+
+static const char *__doc_mitsuba_OptixAccelData_HandleData = R"doc()doc";
+
+static const char *__doc_mitsuba_OptixAccelData_HandleData_buffer = R"doc()doc";
+
+static const char *__doc_mitsuba_OptixAccelData_HandleData_count = R"doc()doc";
+
+static const char *__doc_mitsuba_OptixAccelData_HandleData_handle = R"doc()doc";
+
+static const char *__doc_mitsuba_OptixAccelData_meshes = R"doc()doc";
+
+static const char *__doc_mitsuba_OptixAccelData_others = R"doc()doc";
+
 static const char *__doc_mitsuba_PCG32Sampler =
 R"doc(Interface for sampler plugins based on the PCG32 random number
 generator)doc";
@@ -4613,6 +4643,18 @@ static const char *__doc_mitsuba_Properties_volume_3 = R"doc()doc";
 
 static const char *__doc_mitsuba_Properties_was_queried = R"doc(Check if a certain property was queried)doc";
 
+static const char *__doc_mitsuba_RadianceSample = R"doc()doc";
+
+static const char *__doc_mitsuba_RadianceSample_RadianceSample = R"doc()doc";
+
+static const char *__doc_mitsuba_RadianceSample_mask = R"doc()doc";
+
+static const char *__doc_mitsuba_RadianceSample_printRadiance = R"doc()doc";
+
+static const char *__doc_mitsuba_RadianceSample_radiance = R"doc()doc";
+
+static const char *__doc_mitsuba_RadianceSample_time = R"doc()doc";
+
 static const char *__doc_mitsuba_RadicalInverse =
 R"doc(Efficient implementation of a radical inverse function with prime
 bases including scrambled versions.
@@ -5182,6 +5224,8 @@ static const char *__doc_mitsuba_Scene_m_integrator = R"doc()doc";
 
 static const char *__doc_mitsuba_Scene_m_sensors = R"doc()doc";
 
+static const char *__doc_mitsuba_Scene_m_shapegroups = R"doc()doc";
+
 static const char *__doc_mitsuba_Scene_m_shapes = R"doc()doc";
 
 static const char *__doc_mitsuba_Scene_m_shapes_grad_enabled = R"doc()doc";
@@ -5422,9 +5466,33 @@ intersection acceleration data structures.)doc";
 
 static const char *__doc_mitsuba_Shape_2 = R"doc()doc";
 
-static const char *__doc_mitsuba_Shape_3 = R"doc()doc";
+static const char *__doc_mitsuba_ShapeGroup = R"doc()doc";
 
-static const char *__doc_mitsuba_Shape_4 = R"doc()doc";
+static const char *__doc_mitsuba_ShapeGroup_2 = R"doc()doc";
+
+static const char *__doc_mitsuba_ShapeGroup_ShapeGroup = R"doc()doc";
+
+static const char *__doc_mitsuba_ShapeGroup_bbox = R"doc()doc";
+
+static const char *__doc_mitsuba_ShapeGroup_class = R"doc()doc";
+
+static const char *__doc_mitsuba_ShapeGroup_compute_surface_interaction = R"doc()doc";
+
+static const char *__doc_mitsuba_ShapeGroup_effective_primitive_count = R"doc()doc";
+
+static const char *__doc_mitsuba_ShapeGroup_m_bbox = R"doc()doc";
+
+static const char *__doc_mitsuba_ShapeGroup_m_kdtree = R"doc()doc";
+
+static const char *__doc_mitsuba_ShapeGroup_primitive_count = R"doc()doc";
+
+static const char *__doc_mitsuba_ShapeGroup_ray_intersect_preliminary = R"doc()doc";
+
+static const char *__doc_mitsuba_ShapeGroup_ray_test = R"doc()doc";
+
+static const char *__doc_mitsuba_ShapeGroup_surface_area = R"doc()doc";
+
+static const char *__doc_mitsuba_ShapeGroup_to_string = R"doc()doc";
 
 static const char *__doc_mitsuba_ShapeKDTree = R"doc()doc";
 
@@ -5625,11 +5693,15 @@ static const char *__doc_mitsuba_Shape_interior_medium = R"doc(Return the medium
 
 static const char *__doc_mitsuba_Shape_is_emitter = R"doc(Is this shape also an area emitter?)doc";
 
+static const char *__doc_mitsuba_Shape_is_instance = R"doc(Is this shape an instance?)doc";
+
 static const char *__doc_mitsuba_Shape_is_medium_transition = R"doc(Does the surface of this shape mark a medium transition?)doc";
 
 static const char *__doc_mitsuba_Shape_is_mesh = R"doc(Is this shape a triangle mesh?)doc";
 
 static const char *__doc_mitsuba_Shape_is_sensor = R"doc(Is this shape also an area sensor?)doc";
+
+static const char *__doc_mitsuba_Shape_is_shapegroup = R"doc(Is this shape a shapegroup?)doc";
 
 static const char *__doc_mitsuba_Shape_m_bsdf = R"doc()doc";
 
@@ -5885,6 +5957,168 @@ passes.)doc";
 static const char *__doc_mitsuba_Spiral_set_passes =
 R"doc(Sets the number of time the spiral should automatically reset. Not
 affected by a call to reset.)doc";
+
+static const char *__doc_mitsuba_StreakImageBlock = R"doc(TODO:)doc";
+
+static const char *__doc_mitsuba_StreakImageBlock_2 = R"doc()doc";
+
+static const char *__doc_mitsuba_StreakImageBlock_StreakImageBlock =
+R"doc(Construct a new streak image block of the requested properties
+
+Parameter ``size``:
+    Specifies the block dimensions (not accounting for additional
+    border pixels required to support image reconstruction filters).
+    Because it is a Streak Image Block, the size is 3D.
+
+// TODO: see if StreakImageBlock should be agnostic to this and the
+third // dimension should be part of size as Vector3i and delete
+time_resolution/exposuretime // since that would be part of the film
+containing the streak img block
+
+Parameter ``time_resolution``:
+    $Parameter ``exposure_time``:
+
+Parameter ``channel_count``:
+    Specifies the number of image channels.
+
+Parameter ``filter``:
+    Pointer to the film's reconstruction filter. If passed, it is used
+    to compute and store reconstruction weights. Note that it is
+    mandatory when any of the block's put operations are used, except
+    for ``put``(const StreakImageBlock*).
+
+Parameter ``time_filter``:
+    Pointer to the film's time reconstruction filter. If passed, it is
+    used to compute and store the time reconstruction weights. Note
+    that it is mandatory when any of the block's put operations are
+    used, except for ``put``(const StreakImageBlock*).
+
+Parameter ``warn_negative``:
+    Warn when writing samples with negative components?
+
+Parameter ``warn_invalid``:
+    Warn when writing samples with components that are equal to NaN
+    (not a number) or +/- infinity?
+
+Parameter ``border``:
+    Allocate a border region around the image block to support
+    contributions to adjacent pixels when using wide (i.e. non-box)
+    reconstruction filters?
+
+Parameter ``normalize``:
+    Ensure that splats created via ``ImageBlock::put()`` add a unit
+    amount of energy? Stratified sampling techniques that sample rays
+    in image space should set this to ``False``, since the samples
+    will eventually be divided by the accumulated sample weight to
+    remove any non-uniformity.)doc";
+
+static const char *__doc_mitsuba_StreakImageBlock_border_size = R"doc(Return the border region used by the reconstruction filter)doc";
+
+static const char *__doc_mitsuba_StreakImageBlock_channel_count = R"doc(Return the number of channels stored by the image block)doc";
+
+static const char *__doc_mitsuba_StreakImageBlock_class = R"doc()doc";
+
+static const char *__doc_mitsuba_StreakImageBlock_clear = R"doc(Clear everything to zero.)doc";
+
+static const char *__doc_mitsuba_StreakImageBlock_data = R"doc(Return the underlying pixel buffer)doc";
+
+static const char *__doc_mitsuba_StreakImageBlock_data_2 = R"doc(Return the underlying pixel buffer (const version))doc";
+
+static const char *__doc_mitsuba_StreakImageBlock_exposure_time = R"doc()doc";
+
+static const char *__doc_mitsuba_StreakImageBlock_height = R"doc(Return the bitmap's height in pixels)doc";
+
+static const char *__doc_mitsuba_StreakImageBlock_length = R"doc(Return the bitmap's length in pixels)doc";
+
+static const char *__doc_mitsuba_StreakImageBlock_m_border_size = R"doc()doc";
+
+static const char *__doc_mitsuba_StreakImageBlock_m_channel_count = R"doc()doc";
+
+static const char *__doc_mitsuba_StreakImageBlock_m_data = R"doc()doc";
+
+static const char *__doc_mitsuba_StreakImageBlock_m_exposure_time = R"doc()doc";
+
+static const char *__doc_mitsuba_StreakImageBlock_m_filter = R"doc()doc";
+
+static const char *__doc_mitsuba_StreakImageBlock_m_normalize = R"doc()doc";
+
+static const char *__doc_mitsuba_StreakImageBlock_m_offset = R"doc()doc";
+
+static const char *__doc_mitsuba_StreakImageBlock_m_size = R"doc()doc";
+
+static const char *__doc_mitsuba_StreakImageBlock_m_time = R"doc()doc";
+
+static const char *__doc_mitsuba_StreakImageBlock_m_time_border_size = R"doc()doc";
+
+static const char *__doc_mitsuba_StreakImageBlock_m_time_filter = R"doc()doc";
+
+static const char *__doc_mitsuba_StreakImageBlock_m_warn_invalid = R"doc()doc";
+
+static const char *__doc_mitsuba_StreakImageBlock_m_warn_negative = R"doc()doc";
+
+static const char *__doc_mitsuba_StreakImageBlock_m_weights_x = R"doc()doc";
+
+static const char *__doc_mitsuba_StreakImageBlock_m_weights_y = R"doc()doc";
+
+static const char *__doc_mitsuba_StreakImageBlock_offset = R"doc(Return the current block offset)doc";
+
+static const char *__doc_mitsuba_StreakImageBlock_put = R"doc(Accumulate another streak image block into this one)doc";
+
+static const char *__doc_mitsuba_StreakImageBlock_put_2 =
+R"doc(Store a vector of samples / packets of samples inside the streak image
+block.
+
+\note This method is only valid if a reconstruction filter was given
+at the construction of the block.
+
+Parameter ``pos``:
+    Denotes the sample position in fractional pixel coordinates. It is
+    not checked, and so must be valid. The block's offset is
+    subtracted from the given position to obtain the final pixel
+    position.
+
+Parameter ``wavelengths``:
+    Sample wavelengths in nanometers
+
+Parameter ``radianceSampleVector``:
+    Samples value associated with the specified wavelengths
+
+Parameter ``alpha``:
+    Alpha value assocated with the sample
+
+Returns:
+    ``False`` if one of the sample values was *invalid*, e.g. NaN or
+    negative. A warning is also printed if ``m_warn_negative`` or
+    ``m_warn_invalid`` is enabled.)doc";
+
+static const char *__doc_mitsuba_StreakImageBlock_put_3 = R"doc()doc";
+
+static const char *__doc_mitsuba_StreakImageBlock_set_offset =
+R"doc(Set the current block offset.
+
+This corresponds to the offset from the top-left corner of a larger
+image (e.g. a Film) to the top-left corner of this ImageBlock
+instance.)doc";
+
+static const char *__doc_mitsuba_StreakImageBlock_set_size = R"doc(Set the block size. This potentially destroys the block's content.)doc";
+
+static const char *__doc_mitsuba_StreakImageBlock_set_warn_invalid = R"doc(Warn when writing invalid (NaN, +/- infinity) sample values?)doc";
+
+static const char *__doc_mitsuba_StreakImageBlock_set_warn_negative = R"doc(Warn when writing negative sample values?)doc";
+
+static const char *__doc_mitsuba_StreakImageBlock_size = R"doc(Return the current block size)doc";
+
+static const char *__doc_mitsuba_StreakImageBlock_time = R"doc(Return the current block time (length))doc";
+
+static const char *__doc_mitsuba_StreakImageBlock_time_border_size = R"doc(Return the border region used by the reconstruction filter (temporal))doc";
+
+static const char *__doc_mitsuba_StreakImageBlock_to_string = R"doc(//! @})doc";
+
+static const char *__doc_mitsuba_StreakImageBlock_warn_invalid = R"doc(Warn when writing invalid (NaN, +/- infinity) sample values?)doc";
+
+static const char *__doc_mitsuba_StreakImageBlock_warn_negative = R"doc(Warn when writing negative sample values?)doc";
+
+static const char *__doc_mitsuba_StreakImageBlock_width = R"doc(Return the bitmap's width in pixels)doc";
 
 static const char *__doc_mitsuba_Stream =
 R"doc(Abstract seekable stream class
@@ -6291,8 +6525,6 @@ static const char *__doc_mitsuba_Struct_is_unsigned = R"doc(Check whether the gi
 
 static const char *__doc_mitsuba_Struct_m_byte_order = R"doc()doc";
 
-static const char *__doc_mitsuba_Struct_m_fields = R"doc()doc";
-
 static const char *__doc_mitsuba_Struct_m_pack = R"doc()doc";
 
 static const char *__doc_mitsuba_Struct_offset = R"doc(Return the offset of the i-th field)doc";
@@ -6388,6 +6620,8 @@ Implementation in 'bsdf.h')doc";
 static const char *__doc_mitsuba_SurfaceInteraction_bsdf_2 = R"doc()doc";
 
 static const char *__doc_mitsuba_SurfaceInteraction_compute_uv_partials = R"doc(Computes texture coordinate partials)doc";
+
+static const char *__doc_mitsuba_SurfaceInteraction_distance = R"doc()doc";
 
 static const char *__doc_mitsuba_SurfaceInteraction_dn_du = R"doc(Normal partials wrt. the UV parameterization)doc";
 
@@ -7517,6 +7751,124 @@ static const char *__doc_mitsuba_Transform_translate = R"doc(Create a translatio
 
 static const char *__doc_mitsuba_Transform_translation = R"doc(Get the translation part of a matrix)doc";
 
+static const char *__doc_mitsuba_TransientIntegrator = R"doc()doc";
+
+static const char *__doc_mitsuba_TransientIntegrator_2 = R"doc()doc";
+
+static const char *__doc_mitsuba_TransientIntegrator_TransientIntegrator = R"doc(Create an integrator)doc";
+
+static const char *__doc_mitsuba_TransientIntegrator_cancel =
+R"doc(Cancel a running render job
+
+This function can be called asynchronously to cancel a running render
+job. In this case, render() will quit with a return value of
+``False``.)doc";
+
+static const char *__doc_mitsuba_TransientIntegrator_class = R"doc()doc";
+
+static const char *__doc_mitsuba_TransientIntegrator_render = R"doc(Perform the main rendering job. Returns ``True`` upon success)doc";
+
+static const char *__doc_mitsuba_TransientMonteCarloIntegrator = R"doc()doc";
+
+static const char *__doc_mitsuba_TransientMonteCarloIntegrator_2 = R"doc()doc";
+
+static const char *__doc_mitsuba_TransientMonteCarloIntegrator_TransientMonteCarloIntegrator = R"doc(Create an integrator)doc";
+
+static const char *__doc_mitsuba_TransientMonteCarloIntegrator_class = R"doc()doc";
+
+static const char *__doc_mitsuba_TransientMonteCarloIntegrator_m_max_depth = R"doc()doc";
+
+static const char *__doc_mitsuba_TransientMonteCarloIntegrator_m_rr_depth = R"doc()doc";
+
+static const char *__doc_mitsuba_TransientSamplingIntegrator = R"doc()doc";
+
+static const char *__doc_mitsuba_TransientSamplingIntegrator_2 = R"doc()doc";
+
+static const char *__doc_mitsuba_TransientSamplingIntegrator_TransientSamplingIntegrator = R"doc(//! @})doc";
+
+static const char *__doc_mitsuba_TransientSamplingIntegrator_aov_names =
+R"doc(For integrators that return one or more arbitrary output variables
+(AOVs), this function specifies a list of associated channel names.
+The default implementation simply returns an empty vector.)doc";
+
+static const char *__doc_mitsuba_TransientSamplingIntegrator_cancel = R"doc()doc";
+
+static const char *__doc_mitsuba_TransientSamplingIntegrator_class = R"doc()doc";
+
+static const char *__doc_mitsuba_TransientSamplingIntegrator_m_block_size = R"doc(Size of (square) image blocks to render per core.)doc";
+
+static const char *__doc_mitsuba_TransientSamplingIntegrator_m_hide_emitters = R"doc(Flag for disabling direct visibility of emitters)doc";
+
+static const char *__doc_mitsuba_TransientSamplingIntegrator_m_render_timer = R"doc(Timer used to enforce the timeout.)doc";
+
+static const char *__doc_mitsuba_TransientSamplingIntegrator_m_samples_per_pass =
+R"doc(Number of samples to compute for each pass over the image blocks.
+
+Must be a multiple of the total sample count per pixel. If set to
+(size_t) -1, all the work is done in a single pass (default).)doc";
+
+static const char *__doc_mitsuba_TransientSamplingIntegrator_m_stop = R"doc(Integrators should stop all work when this flag is set to true.)doc";
+
+static const char *__doc_mitsuba_TransientSamplingIntegrator_m_timeout =
+R"doc(Maximum amount of time to spend rendering (excluding scene parsing).
+
+Specified in seconds. A negative values indicates no timeout.)doc";
+
+static const char *__doc_mitsuba_TransientSamplingIntegrator_render = R"doc(//! @{ \name Integrator interface implementation)doc";
+
+static const char *__doc_mitsuba_TransientSamplingIntegrator_render_block = R"doc()doc";
+
+static const char *__doc_mitsuba_TransientSamplingIntegrator_render_sample = R"doc()doc";
+
+static const char *__doc_mitsuba_TransientSamplingIntegrator_sample =
+R"doc(Sample the incident radiance along a ray.
+
+Parameter ``scene``:
+    The underlying scene in which the radiance function should be
+    sampled
+
+Parameter ``sampler``:
+    A source of (pseudo-/quasi-) random numbers
+
+Parameter ``ray``:
+    A ray, optionally with differentials
+
+Parameter ``medium``:
+    If the ray is inside a medium, this parameter holds a pointer to
+    that medium
+
+Parameter ``active``:
+    A mask that indicates which SIMD lanes are active
+
+Parameter ``aov``:
+    Integrators may return one or more arbitrary output variables
+    (AOVs) via this parameter. If ``nullptr`` is provided to this
+    argument, no AOVs should be returned. Otherwise, the caller
+    guarantees that space for at least ``aov_names().size()`` entries
+    has been allocated.
+
+Parameter ``radiance``:
+    Integrator must return a pair containing a spectrum and a mask
+    specifying whether a surface or medium interaction was sampled.
+    False mask entries indicate that the ray "escaped" the scene, in
+    which case the the returned spectrum contains the contribution of
+    environment maps, if present. The mask can be used to estimate a
+    suitable alpha channel of a rendered image.
+
+Remark:
+    In the Python bindings, this function returns the ``aov`` output
+    argument as an additional return value. In other words: `` (spec,
+    mask, aov) = integrator.sample(scene, sampler, ray, medium,
+    active) ``)doc";
+
+static const char *__doc_mitsuba_TransientSamplingIntegrator_should_stop =
+R"doc(Indicates whether cancel() or a timeout have occured. Should be
+checked regularly in the integrator's main loop so that timeouts are
+enforced accurately.
+
+Note that accurate timeouts rely on m_render_timer, which needs to be
+reset at the beginning of the rendering phase.)doc";
+
 static const char *__doc_mitsuba_TransportMode =
 R"doc(Specifies the transport mode when sampling or evaluating a scattering
 function)doc";
@@ -7701,6 +8053,8 @@ Out-of-bounds regions are safely ignored. It is assumed that ``source
 The function supports `T` being a raw pointer or an arbitrary Enoki
 array that can potentially live on the GPU and/or be differentiable.)doc";
 
+static const char *__doc_mitsuba_accumulate_3d = R"doc()doc";
+
 static const char *__doc_mitsuba_bsdf =
 R"doc(Returns the BSDF of the intersected shape.
 
@@ -7709,6 +8063,14 @@ interaction record. This function computes texture coordinate partials
 if this is required by the BSDF (e.g. for texture filtering).
 
 Implementation in 'bsdf.h')doc";
+
+static const char *__doc_mitsuba_build_gas =
+R"doc(Build OptiX geometry acceleration structures (GAS) for a given list of
+shapes.
+
+Two different GAS will be created for the meshes and the custom
+shapes. Optix handles to those GAS will be stored in an
+OptixAccelData.)doc";
 
 static const char *__doc_mitsuba_cie1931_xyz =
 R"doc(Evaluate the CIE 1931 XYZ color matching functions given a wavelength
@@ -8150,6 +8512,10 @@ eta_ti Reciprocal of the relative index of refraction in the direction
 of travel. In the real-valued case, this also happens to be equal to
 the scale factor that must be applied to the X and Y component of the
 refracted direction.)doc";
+
+static const char *__doc_mitsuba_get_shape_descr_idx =
+R"doc(Retrieve index of custom shape descriptor in the list above for a
+given shape)doc";
 
 static const char *__doc_mitsuba_has_flag = R"doc()doc";
 
@@ -8886,6 +9252,10 @@ Returns:
     permutation vector.)doc";
 
 static const char *__doc_mitsuba_perspective_projection = R"doc()doc";
+
+static const char *__doc_mitsuba_prepare_ias =
+R"doc(Prepares and fills the OptixInstance array associated with a given
+list of shapes.)doc";
 
 static const char *__doc_mitsuba_profiler_flags = R"doc()doc";
 
@@ -10062,6 +10432,8 @@ static const char *__doc_zmq_socket_connect_2 = R"doc()doc";
 
 static const char *__doc_zmq_socket_connected = R"doc()doc";
 
+static const char *__doc_zmq_socket_discard_remainder = R"doc(Gobble up the rest of a (partial) message and throw an exception)doc";
+
 static const char *__doc_zmq_socket_disconnect = R"doc()doc";
 
 static const char *__doc_zmq_socket_disconnect_2 = R"doc()doc";
@@ -10069,6 +10441,8 @@ static const char *__doc_zmq_socket_disconnect_2 = R"doc()doc";
 static const char *__doc_zmq_socket_getsockopt = R"doc()doc";
 
 static const char *__doc_zmq_socket_getsockopt_2 = R"doc()doc";
+
+static const char *__doc_zmq_socket_init = R"doc()doc";
 
 static const char *__doc_zmq_socket_more = R"doc()doc";
 
@@ -10082,7 +10456,29 @@ static const char *__doc_zmq_socket_operator_void = R"doc()doc";
 
 static const char *__doc_zmq_socket_ptr = R"doc()doc";
 
+static const char *__doc_zmq_socket_recv = R"doc()doc";
+
+static const char *__doc_zmq_socket_recv_2 = R"doc()doc";
+
+static const char *__doc_zmq_socket_recv_3 = R"doc()doc";
+
+static const char *__doc_zmq_socket_recv_4 = R"doc()doc";
+
+static const char *__doc_zmq_socket_recv_5 = R"doc()doc";
+
+static const char *__doc_zmq_socket_recv_6 = R"doc()doc";
+
 static const char *__doc_zmq_socket_recvmore = R"doc()doc";
+
+static const char *__doc_zmq_socket_recvmore_2 = R"doc()doc";
+
+static const char *__doc_zmq_socket_recvmore_3 = R"doc()doc";
+
+static const char *__doc_zmq_socket_recvmore_4 = R"doc()doc";
+
+static const char *__doc_zmq_socket_recvmore_5 = R"doc()doc";
+
+static const char *__doc_zmq_socket_recvmore_6 = R"doc()doc";
 
 static const char *__doc_zmq_socket_send = R"doc()doc";
 
@@ -10096,6 +10492,8 @@ static const char *__doc_zmq_socket_send_5 = R"doc()doc";
 
 static const char *__doc_zmq_socket_send_6 = R"doc()doc";
 
+static const char *__doc_zmq_socket_send_7 = R"doc()doc";
+
 static const char *__doc_zmq_socket_sendmore = R"doc()doc";
 
 static const char *__doc_zmq_socket_sendmore_2 = R"doc()doc";
@@ -10108,6 +10506,8 @@ static const char *__doc_zmq_socket_sendmore_5 = R"doc()doc";
 
 static const char *__doc_zmq_socket_sendmore_6 = R"doc()doc";
 
+static const char *__doc_zmq_socket_sendmore_7 = R"doc()doc";
+
 static const char *__doc_zmq_socket_setsockopt = R"doc()doc";
 
 static const char *__doc_zmq_socket_setsockopt_2 = R"doc()doc";
@@ -10117,6 +10517,8 @@ static const char *__doc_zmq_socket_socket = R"doc()doc";
 static const char *__doc_zmq_socket_socket_2 = R"doc()doc";
 
 static const char *__doc_zmq_socket_socket_3 = R"doc()doc";
+
+static const char *__doc_zmq_socket_socket_4 = R"doc()doc";
 
 static const char *__doc_zmq_socket_type = R"doc()doc";
 

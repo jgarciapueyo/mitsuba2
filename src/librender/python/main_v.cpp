@@ -60,6 +60,7 @@ MTS_PY_DECLARE(Endpoint);
 MTS_PY_DECLARE(Film);
 MTS_PY_DECLARE(fresnel);
 MTS_PY_DECLARE(ImageBlock);
+MTS_PY_DECLARE(StreakImageBlock);
 MTS_PY_DECLARE(Integrator);
 MTS_PY_DECLARE(Interaction);
 MTS_PY_DECLARE(SurfaceInteraction);
@@ -110,6 +111,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
     MTS_PY_IMPORT(Film);
     MTS_PY_IMPORT(fresnel);
     MTS_PY_IMPORT(ImageBlock);
+    MTS_PY_IMPORT(StreakImageBlock);
     MTS_PY_IMPORT(Integrator);
     MTS_PY_IMPORT_SUBMODULE(mueller);
     MTS_PY_IMPORT(MicrofacetDistribution);

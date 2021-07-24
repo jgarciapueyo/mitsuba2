@@ -63,6 +63,7 @@ add_library(mitsuba-render-obj OBJECT
   transientintegrator.cpp ${INC_DIR}/transientintegrator.h
   spiral.cpp       ${INC_DIR}/spiral.h
   srgb.cpp         ${INC_DIR}/srgb.h
+  streakimageblock.cpp    ${INC_DIR}/streakimageblock.h
                    ${INC_DIR}/optix/common.h
   optix_api.cpp    ${INC_DIR}/optix_api.h
   ${LIBRENDER_EXTRA_SRC}

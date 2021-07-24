@@ -31,6 +31,7 @@ foreach (MTS_VARIANT ${MTS_VARIANTS})
     sensor_v.cpp
     shape_v.cpp
     srgb_v.cpp
+    streakimageblock_v.cpp
     texture_v.cpp
   )
 

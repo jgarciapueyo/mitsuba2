@@ -14,6 +14,7 @@ template <typename Float, typename Spectrum> class Emitter;
 template <typename Float, typename Spectrum> class Endpoint;
 template <typename Float, typename Spectrum> class Film;
 template <typename Float, typename Spectrum> class ImageBlock;
+template <typename Float, typename Spectrum> class StreakImageBlock;
 template <typename Float, typename Spectrum> class Integrator;
 template <typename Float, typename Spectrum> class SamplingIntegrator;
 template <typename Float, typename Spectrum> class MonteCarloIntegrator;
@@ -88,6 +89,7 @@ template <typename Float_, typename Spectrum_> struct RenderAliases {
     using PhaseFunction          = mitsuba::PhaseFunction<FloatU, SpectrumU>;
     using Film                   = mitsuba::Film<FloatU, SpectrumU>;
     using ImageBlock             = mitsuba::ImageBlock<FloatU, SpectrumU>;
+    using StreakImageBlock       = mitsuba::StreakImageBlock<FloatU, SpectrumU>;
     using ReconstructionFilter   = mitsuba::ReconstructionFilter<FloatU, SpectrumU>;
     using Texture                = mitsuba::Texture<FloatU, SpectrumU>;
     using Volume                 = mitsuba::Volume<FloatU, SpectrumU>;

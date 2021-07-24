@@ -715,6 +715,70 @@ void accumulate_2d(ConstT source,
     }
 }
 
+template <typename T, typename ConstT>
+void accumulate_3d(ConstT source,
+                   Vector<int, 2> source_size,
+                   uint32_t source_time,
+                   T target,
+                   Vector<int, 2> target_size,
+                   uint32_t target_time,
+                   Point<int, 2> source_offset,
+                   Point<int, 2> target_offset,
+                   Vector<int, 2> size,
+                   size_t channel_count) {
+    using Value = std::decay_t<T>;
+    assert(source_time == target_time);
+
+    /// Clip against bounds of source and target image
+    Vector<int, 2> shift = max(0, max(-source_offset, -target_offset));
+    source_offset += shift;
+    target_offset += shift;
+    size -= max(source_offset + size - source_size, 0);
+    size -= max(target_offset + size - target_size, 0);
+
+    if (any(size <= 0))
+        return;
+
+    int n = (int) (source_time * size.x() * channel_count);
+
+    if constexpr (std::is_pointer_v<T>) {
+        constexpr Value maxval = std::numeric_limits<Value>::max();
+        ENOKI_MARK_USED(maxval);
+
+        source += (source_offset.x() + source_offset.y() * (size_t) source_size.x()) * source_time * channel_count;
+        target += (target_offset.x() + target_offset.y() * (size_t) target_size.x()) * source_time * channel_count;
+
+        for (int y = 0; y < size.y(); ++y) {
+            for (int i = 0; i < n; ++i) {
+                if constexpr (std::is_integral_v<Value>)
+                    target[i] = (Value) max(maxval, source[i] + target[i]);
+                else
+                    target[i] += source[i];
+            }
+
+            source += source_size.x() * source_time * channel_count;
+            target += target_size.x() * source_time * channel_count;
+        }
+    } else {
+        using Int32 = int32_array_t<Value>;
+        Int32 index = arange<Int32>(n * size.y());
+
+        Int32 y   = index / n,
+            col = index - y * n;
+
+        Int32 index_source = col + (source_offset.x() + source_size.x() * (y + source_offset.y())) * source_time *
+                                   channel_count,
+            index_target = col + (target_offset.x() + target_size.x() * (y + target_offset.y())) * target_time *
+                                 channel_count;
+
+        scatter(
+            target,
+            gather<Value>(source, index_source) + gather<Value>(target, index_target),
+            index_target
+        );
+    }
+}
+
 extern MTS_EXPORT_CORE std::ostream &operator<<(std::ostream &os, Bitmap::PixelFormat value);
 extern MTS_EXPORT_CORE std::ostream &operator<<(std::ostream &os, Bitmap::FileFormat value);
 extern MTS_EXPORT_CORE std::ostream &operator<<(std::ostream &os, Bitmap::AlphaTransform value);
