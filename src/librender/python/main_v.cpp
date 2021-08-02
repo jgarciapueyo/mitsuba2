@@ -2,6 +2,7 @@
 #include <mitsuba/render/sensor.h>
 #include <mitsuba/render/emitter.h>
 #include <mitsuba/render/film.h>
+#include <mitsuba/render/streakfilm.h>
 #include <mitsuba/render/mesh.h>
 #include <mitsuba/render/texture.h>
 #include <mitsuba/render/bsdf.h>
@@ -38,6 +39,7 @@ static py::object caster(Object *o) {
     PY_TRY_CAST(Endpoint);
 
     PY_TRY_CAST(BSDF);
+    PY_TRY_CAST(StreakFilm);
     PY_TRY_CAST(Film);
 
     PY_TRY_CAST(MonteCarloIntegrator);
@@ -58,6 +60,7 @@ MTS_PY_DECLARE(BSDF);
 MTS_PY_DECLARE(Emitter);
 MTS_PY_DECLARE(Endpoint);
 MTS_PY_DECLARE(Film);
+MTS_PY_DECLARE(StreakFilm);
 MTS_PY_DECLARE(fresnel);
 MTS_PY_DECLARE(ImageBlock);
 MTS_PY_DECLARE(StreakImageBlock);
@@ -109,6 +112,7 @@ PYBIND11_MODULE(MODULE_NAME, m) {
     MTS_PY_IMPORT(Endpoint);
     MTS_PY_IMPORT(Emitter);
     MTS_PY_IMPORT(Film);
+    MTS_PY_IMPORT(StreakFilm);
     MTS_PY_IMPORT(fresnel);
     MTS_PY_IMPORT(ImageBlock);
     MTS_PY_IMPORT(StreakImageBlock);

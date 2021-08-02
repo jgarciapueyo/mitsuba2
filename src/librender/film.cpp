@@ -33,6 +33,11 @@ MTS_VARIANT Film<Float, Spectrum>::Film(const Properties &props) : Object() {
 
     // Use the provided reconstruction filter, if any.
     for (auto &[name, obj] : props.objects(false)) {
+        // TODO: check if there is a possibility that if a filter does not have a name, assign it to
+        //       m_filter.
+        if(name != "rfilter") {
+           continue;
+        }
         auto *rfilter = dynamic_cast<ReconstructionFilter *>(obj.get());
         if (rfilter) {
             if (m_filter)

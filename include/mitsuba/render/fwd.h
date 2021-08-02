@@ -13,11 +13,14 @@ template <typename Float, typename Spectrum> class BSDF;
 template <typename Float, typename Spectrum> class Emitter;
 template <typename Float, typename Spectrum> class Endpoint;
 template <typename Float, typename Spectrum> class Film;
+template <typename Float, typename Spectrum> class StreakFilm;
 template <typename Float, typename Spectrum> class ImageBlock;
 template <typename Float, typename Spectrum> class StreakImageBlock;
 template <typename Float, typename Spectrum> class Integrator;
 template <typename Float, typename Spectrum> class SamplingIntegrator;
+template <typename Float, typename Spectrum> class TransientSamplingIntegrator;
 template <typename Float, typename Spectrum> class MonteCarloIntegrator;
+template <typename Float, typename Spectrum> class TransientMonteCarloIntegrator;
 template <typename Float, typename Spectrum> class Medium;
 template <typename Float, typename Spectrum> class Mesh;
 template <typename Float, typename Spectrum> class MicrofacetDistribution;
@@ -79,7 +82,9 @@ template <typename Float_, typename Spectrum_> struct RenderAliases {
     using Mesh                   = mitsuba::Mesh<FloatU, SpectrumU>;
     using Integrator             = mitsuba::Integrator<FloatU, SpectrumU>;
     using SamplingIntegrator     = mitsuba::SamplingIntegrator<FloatU, SpectrumU>;
+    using TransientSamplingIntegrator     = mitsuba::TransientSamplingIntegrator<FloatU, SpectrumU>;
     using MonteCarloIntegrator   = mitsuba::MonteCarloIntegrator<FloatU, SpectrumU>;
+    using TransientMonteCarloIntegrator   = mitsuba::TransientMonteCarloIntegrator<FloatU, SpectrumU>;
     using BSDF                   = mitsuba::BSDF<FloatU, SpectrumU>;
     using Sensor                 = mitsuba::Sensor<FloatU, SpectrumU>;
     using ProjectiveCamera       = mitsuba::ProjectiveCamera<FloatU, SpectrumU>;
@@ -88,6 +93,7 @@ template <typename Float_, typename Spectrum_> struct RenderAliases {
     using Medium                 = mitsuba::Medium<FloatU, SpectrumU>;
     using PhaseFunction          = mitsuba::PhaseFunction<FloatU, SpectrumU>;
     using Film                   = mitsuba::Film<FloatU, SpectrumU>;
+    using StreakFilm             = mitsuba::StreakFilm<FloatU, SpectrumU>;
     using ImageBlock             = mitsuba::ImageBlock<FloatU, SpectrumU>;
     using StreakImageBlock       = mitsuba::StreakImageBlock<FloatU, SpectrumU>;
     using ReconstructionFilter   = mitsuba::ReconstructionFilter<FloatU, SpectrumU>;
@@ -146,7 +152,9 @@ template <typename Float_, typename Spectrum_> struct RenderAliases {
     using Medium                 = typename RenderAliases::Medium;                                 \
     using PhaseFunction          = typename RenderAliases::PhaseFunction;                          \
     using Film                   = typename RenderAliases::Film;                                   \
+    using StreakFilm             = typename RenderAliases::StreakFilm;                             \
     using ImageBlock             = typename RenderAliases::ImageBlock;                             \
+    using StreakImageBlock       = typename RenderAliases::StreakImageBlock;                       \
     using ReconstructionFilter   = typename RenderAliases::ReconstructionFilter;                   \
     using Texture                = typename RenderAliases::Texture;                                \
     using Volume                 = typename RenderAliases::Volume;                                 \

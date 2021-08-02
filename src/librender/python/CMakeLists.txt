@@ -17,6 +17,7 @@ foreach (MTS_VARIANT ${MTS_VARIANTS})
     emitter_v.cpp
     endpoint_v.cpp
     film_v.cpp
+    streakfilm_v.cpp
     fresnel_v.cpp
     imageblock_v.cpp
     interaction_v.cpp
