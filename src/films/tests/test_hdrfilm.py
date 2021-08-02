@@ -14,7 +14,7 @@ def test01_construct(variant_scalar_rgb):
 
     # With a provided reconstruction filter
     film = load_string("""<film version="2.0.0" type="hdrfilm">
-            <rfilter type="gaussian">
+            <rfilter name="rfilter" type="gaussian">
                 <float name="stddev" value="18.5"/>
             </rfilter>
         </film>""")
@@ -87,7 +87,7 @@ def test03_develop(variant_scalar_rgb, file_format, tmpdir):
             <string name="file_format" value="{}"/>
             <string name="pixel_format" value="rgba"/>
             <string name="component_format" value="float32"/>
-            <rfilter type="box"/>
+            <rfilter name="rfilter" type="box"/>
         </film>""".format(file_format))
     # Regardless of the output file format, values are stored as XYZAW (5 channels).
     contents = np.random.uniform(size=(film.size()[1], film.size()[0], 5))
