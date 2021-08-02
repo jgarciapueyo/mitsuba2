@@ -4,26 +4,9 @@
 #include <mitsuba/core/object.h>
 #include <mitsuba/core/vector.h>
 #include <mitsuba/render/fwd.h>
-#include <mitsuba/render/imageblock.h>
+#include <mitsuba/render/radiancesample.h>
 
 NAMESPACE_BEGIN(mitsuba)
-
-template <typename Float, typename Value, typename Mask>
-struct MTS_EXPORT_RENDER RadianceSample {
-    Float time;
-    Value radiance;
-    Mask mask;
-
-    RadianceSample(Float time, Value radiance, Mask mask)
-        : time(time), radiance(radiance), mask(mask) {
-        // std::cout << "Constructor " << radiance[0] << std::endl;
-        // std::cout << "Constructor2 " << this->radiance[0] << std::endl;
-    }
-
-    void printRadiance() {
-        std::cout << "printRadiance " << this->radiance[0] << std::endl;
-    }
-};
 
 /**
  * TODO:
@@ -83,8 +66,9 @@ public:
      *    sample weight to remove any non-uniformity.
      */
     StreakImageBlock(const ScalarVector2i &size,
-               uint32_t time,
+               int32_t time,
                float exposure_time,
+               float time_offset,
                size_t channel_count,
                const ReconstructionFilter *filter = nullptr,
                const ReconstructionFilter *time_filter = nullptr,
@@ -191,7 +175,7 @@ public:
     void set_offset(const ScalarPoint2i &offset) { m_offset = offset; }
 
     /// Set the block size. This potentially destroys the block's content.
-    void set_size(const ScalarVector2i &size, uint32_t time);
+    void set_size(const ScalarVector2i &size, int32_t time);
 
     /// Return the current block offset
     const ScalarPoint2i &offset() const { return m_offset; }
@@ -202,8 +186,11 @@ public:
     /// Return the current block time (length)
     size_t time() const { return m_time; }
 
-    // Return the current exposure time for each time bin
-    size_t exposure_time() const { return m_exposure_time; }
+    /// Return the current exposure time for each time bin
+    float exposure_time() const { return m_exposure_time; }
+
+    /// Return the current exposure time for each time bin
+    float time_offset() const { return m_time_offset; }
 
     /// Return the bitmap's width in pixels
     size_t width() const { return m_size.x(); }
@@ -242,6 +229,8 @@ public:
     /// Return the underlying pixel buffer (const version)
     const DynamicBuffer<Float> &data() const { return m_data; }
 
+    DynamicBuffer<Float> data(int slice) const;
+
     //! @}
     // =============================================================
 
@@ -254,8 +243,9 @@ protected:
 protected:
     ScalarPoint2i m_offset;
     ScalarVector2i m_size;
-    uint32_t m_time;
+    int32_t m_time;
     float m_exposure_time;
+    float m_time_offset;
     uint32_t m_channel_count;
     int m_border_size;
     int m_time_border_size;

@@ -27,7 +27,7 @@ def test01_construct_no_filters(variant_scalar_rgb):
     from mitsuba.core.xml import load_string
     from mitsuba.render import StreakImageBlock
 
-    sim = StreakImageBlock(size=[32, 32], time=10, exposure_time=2, channel_count=4)
+    sim = StreakImageBlock(size=[32, 32], time=10, exposure_time=2, time_offset=0, channel_count=4)
     # Methods of ImageBlock
     assert sim is not None
     assert ek.all(sim.offset() == 0)
@@ -44,6 +44,7 @@ def test01_construct_no_filters(variant_scalar_rgb):
 
     # Methods of StreakImageBlock
     assert sim.time() == 10
+    assert sim.time_border_size() == 0  # Since there's no reconstruction filter
 
 
 def test02_construct_filters(variant_scalar_rgb):
@@ -57,10 +58,11 @@ def test02_construct_filters(variant_scalar_rgb):
                                 <float name="stddev" value="15"/>
                              </rfilter>""")
 
-    sim = StreakImageBlock(size=[10, 11], time=10, exposure_time=2, channel_count=2,
+    sim = StreakImageBlock(size=[10, 11], time=10, exposure_time=2, time_offset=0, channel_count=2,
                            filter=rfilter, time_filter=time_filter, warn_invalid=False)
     assert sim is not None
     assert sim.border_size() == rfilter.border_size()
+    assert sim.time_border_size() == time_filter.border_size()
     assert sim.channel_count() == 2
     assert not sim.warn_invalid()
 
@@ -71,11 +73,11 @@ def test03_put_values_basic_no_filter(variant_scalar_rgb):
 
     rfilter = load_string("""<rfilter version="2.0.0" type="box"/>""")
     exposure_time = 2
-    sim = StreakImageBlock(size=[20, 5], time=10, exposure_time=exposure_time, channel_count=2, filter=rfilter)
+    sim = StreakImageBlock(size=[20, 5], time=10, exposure_time=exposure_time, time_offset=0, channel_count=2, filter=rfilter)
     sim.clear()
     check_value(sim, 0)
 
-    sim2 = StreakImageBlock(size=sim.size(), time=sim.time(), exposure_time=2,
+    sim2 = StreakImageBlock(size=sim.size(), time=sim.time(), exposure_time=2, time_offset=0,
                             channel_count=sim.channel_count(), filter=rfilter)
     sim2.clear()
     ref = 3.14 * np.arange(sim.height() * sim.width() * sim.time() * sim.channel_count()) \
@@ -96,12 +98,12 @@ def test04_put_image_block(variant_scalar_rgb):
     # Define sim Streak Imake Block as empty
     rfilter = load_string("""<rfilter version="2.0.0" type="box"/>""")
     exposure_time = 2
-    sim = StreakImageBlock(size=[20, 5], time=10, exposure_time=exposure_time, channel_count=2, filter=rfilter)
+    sim = StreakImageBlock(size=[20, 5], time=10, exposure_time=exposure_time, time_offset=0, channel_count=2, filter=rfilter)
     sim.clear()
     check_value(sim, 0)
 
     # Define sim2 Streak Image Block as empty
-    sim2 = StreakImageBlock(size=sim.size(), time=sim.time(), exposure_time=2,
+    sim2 = StreakImageBlock(size=sim.size(), time=sim.time(), exposure_time=sim.exposure_time(), time_offset=sim.time_offset(),
                             channel_count=sim.channel_count(), filter=rfilter)
     sim2.clear()
     # Copy values into sim2
@@ -131,7 +133,7 @@ def test05_put_values_basic(variant_scalar_rgb):
                                 <float name="radius" value="0.4"/>
                              </rfilter>""")
     exposure_time = 2
-    sim = StreakImageBlock(size=[20, 5], time=10, exposure_time=exposure_time, channel_count=5, filter=rfilter)
+    sim = StreakImageBlock(size=[20, 5], time=10, exposure_time=exposure_time, time_offset=0, channel_count=5, filter=rfilter)
     sim.clear()
 
     # From a spectrum & alpha value
@@ -169,7 +171,7 @@ def test06_put_with_filter(variant_scalar_rgb):
     size = [12, 12]
     time = 10
     exposure_time = 1
-    sim = StreakImageBlock(size, time=time, exposure_time=exposure_time, channel_count=5, filter=rfilter)
+    sim = StreakImageBlock(size, time=time, exposure_time=exposure_time, time_offset=0, channel_count=5, filter=rfilter)
     sim.clear()
 
     positions = np.array([
@@ -221,5 +223,51 @@ def test06_put_with_filter(variant_scalar_rgb):
                 ref[r_pos[1], r_pos[0], time_random,  4] += weight * 1  # Weight
 
     check_value(sim, ref, atol=1e-6)
+
+
+def test07_data_slice(variant_scalar_rgb):
+    from mitsuba.core import srgb_to_xyz
+    from mitsuba.core.xml import load_string
+    from mitsuba.render import StreakImageBlock
+
+    # Recall that we must pass a reconstruction filter to use the `put` methods.
+    # Parameterized with radius < 0.5, so it does not have effect
+    rfilter = load_string("""<rfilter version="2.0.0" type="box">
+                                <float name="radius" value="0.4"/>
+                             </rfilter>""")
+
+
+    exposure_time = 2
+    sim = StreakImageBlock(size=[20, 5], time=10, exposure_time=exposure_time, time_offset=0, channel_count=5, filter=rfilter)
+    sim.clear()
+
+    # Fill the StreakImageBlock with values
+    ref = 3.14 * np.arange(sim.height() * sim.width() * sim.time() * sim.channel_count())\
+        .reshape([sim.height(), sim.width(), sim.time(), sim.channel_count()])
+
+    for x in range(sim.height()):
+        for y in range(sim.width()):
+            for z in range(sim.time()):
+                sim.put([y+0.5, x+0.5], [(z*exposure_time, ref[x, y, z, :], True)])
+
+    # Check that the values are the same
+    check_value(sim, ref)
+
+    for h in range(sim.height()):
+        # Use StreakImageBlock.data(slice)
+        vals = np.array(sim.data(h), copy=False)\
+                 .reshape([sim.width() + 2 * sim.border_size(),
+                           sim.time(),
+                           sim.channel_count()])
+
+        ref2 = np.squeeze(ref[h, :, :, :])
+
+        # Compare values
+        atol=1e-9
+        # Easier to read in case of assert failure
+        for l in range(vals.shape[2]):
+            for k in range(vals.shape[1]):
+                assert ek.allclose(vals[:, k, l], ref2[:, k, l], atol=atol), \
+                    f'Height {h} Time {k} Channel {l}:\n' + str(vals[:, k, l]) + '\n\n' + str(ref2[:, k, l])
 
 # TODO: missing test with Packet and Spectral

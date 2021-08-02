@@ -6,15 +6,15 @@ NAMESPACE_BEGIN(mitsuba)
 
 MTS_VARIANT
 StreakImageBlock<Float, Spectrum>::StreakImageBlock(
-    const ScalarVector2i &size, uint32_t time, float exposure_time,
-    size_t channel_count, const ReconstructionFilter *filter,
+    const ScalarVector2i &size, int32_t time, float exposure_time,
+    float time_offset, size_t channel_count, const ReconstructionFilter *filter,
     const ReconstructionFilter *time_filter, bool warn_negative,
     bool warn_invalid, bool border, bool normalize)
     : m_offset(0), m_size(0), m_time(0), m_exposure_time(exposure_time),
-      m_channel_count((uint32_t) channel_count), m_filter(filter),
-      m_time_filter(time_filter), m_weights_x(nullptr), m_weights_y(nullptr),
-      m_warn_negative(warn_negative), m_warn_invalid(warn_invalid),
-      m_normalize(normalize) {
+      m_time_offset(time_offset), m_channel_count((uint32_t) channel_count),
+      m_filter(filter), m_time_filter(time_filter), m_weights_x(nullptr),
+      m_weights_y(nullptr), m_warn_negative(warn_negative),
+      m_warn_invalid(warn_invalid), m_normalize(normalize) {
 
     m_border_size = (uint32_t)((filter != nullptr && border) ? filter->border_size() : 0);
     m_time_border_size = (uint32_t)((time_filter != nullptr && border) ? time_filter->border_size() : 0);
@@ -45,9 +45,10 @@ MTS_VARIANT void StreakImageBlock<Float, Spectrum>::clear() {
     else
         m_data = zero<DynamicBuffer<Float>>(size);
 }
+
 MTS_VARIANT void
 StreakImageBlock<Float, Spectrum>::set_size(const ScalarVector2i &size,
-                                            const uint32_t time) {
+                                            const int32_t time) {
     if ((size == m_size) && (time == m_time))
         return;
     m_size = size;
@@ -61,6 +62,10 @@ StreakImageBlock<Float, Spectrum>::put(const StreakImageBlock *block) {
 
     if (unlikely(block->channel_count() != channel_count()))
         Throw("ImageBlock::put(): mismatched channel counts!");
+
+    if (unlikely(block->time() != time() ||
+                 block->exposure_time() != exposure_time()))
+        Throw("ImageBlock::put(): mismatched time or exposure_time!");
 
     ScalarVector2i source_size  = block->size() + 2 * block->border_size(),
                    target_size  = size()        + 2 * border_size();
@@ -91,24 +96,13 @@ StreakImageBlock<Float, Spectrum>::put(
     const Point2f &pos_, const std::vector<RadianceSample<Float, const Float *, Mask>> &values) {
     ScopedPhase sp(ProfilerPhase::ImageBlockPut);
     Assert(m_filter != nullptr);
-
-    /**
-    std::cout << "put" << std::endl;
-    for (auto radianceSample : values) {
-       std::cout << pos_ << std::endl;
-       for(int i = 0; i < m_channel_count; ++i) {
-           std::cout << radianceSample.radiance[i] << " ";
-       }
-       std::cout << std::endl;
-    }
-    return;
-     **/
+    // TODO: assert m_time_filter != nullptr and use it later
 
     for (const auto &radianceSample : values) {
         Mask active = radianceSample.mask;
         // Convert t to bin
-        Float pos_sensor      = radianceSample.time / m_exposure_time;
-        UInt32 pos_sensor_int = ceil2int<Float>(pos_sensor);
+        Float pos_sensor      = (radianceSample.time - m_time_offset) / m_exposure_time;
+        Int32 pos_sensor_int = floor2int<Int32>(pos_sensor);
 
         // Check if all sample values are valid
         if (likely(m_warn_negative || m_warn_invalid)) {
@@ -137,7 +131,7 @@ StreakImageBlock<Float, Spectrum>::put(
                 active &= is_valid;
             }
 
-            // Check if pos_sensor is within the time range
+            // Check if pos_sensor_int is within the time range
             active &= (0 <= pos_sensor_int && pos_sensor_int < m_time);
         }
 
@@ -201,6 +195,14 @@ StreakImageBlock<Float, Spectrum>::put(
                 scatter_add(m_data, radianceSample.radiance[k], offset + k, enabled);
         }
     }
+}
+
+MTS_VARIANT DynamicBuffer<Float> StreakImageBlock<Float, Spectrum>::data(int slice_) const {
+    uint32_t values_per_slice = m_channel_count * m_time * width();
+    uint32_t offset = values_per_slice * slice_;
+    DynamicBuffer<ScalarInt32> idx = arange<DynamicBuffer<ScalarInt32>>(offset, offset + values_per_slice);
+    DynamicBuffer<Float> slice_x_t = gather<DynamicBuffer<Float>>(m_data, idx);
+    return slice_x_t;
 }
 
 MTS_VARIANT std::string StreakImageBlock<Float, Spectrum>::to_string() const {
