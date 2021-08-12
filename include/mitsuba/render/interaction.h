@@ -200,7 +200,7 @@ struct SurfaceInteraction : Interaction<Float_, Spectrum_> {
     }
 
     // TODO: fill the description
-    Float distance(const Ray3f &ray) {
+    Float distance(const Ray3f &ray) const {
         return norm(p - ray.o);
     }
 

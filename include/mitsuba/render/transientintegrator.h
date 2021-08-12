@@ -8,10 +8,11 @@
 #include <mitsuba/core/tls.h>
 #include <mitsuba/core/vector.h>
 #include <mitsuba/render/fwd.h>
-#include <mitsuba/render/imageblock.h>
+#include <mitsuba/render/streakimageblock.h>
 #include <mitsuba/render/integrator.h>
 #include <mitsuba/render/interaction.h>
 #include <mitsuba/render/medium.h>
+#include <mitsuba/render/radiancesample.h>
 #include <mitsuba/render/records.h>
 #include <mitsuba/render/scene.h>
 #include <mitsuba/render/shape.h>
@@ -51,7 +52,7 @@ class MTS_EXPORT_RENDER TransientSamplingIntegrator
     : public TransientIntegrator<Float, Spectrum> {
 public:
     MTS_IMPORT_BASE(TransientIntegrator)
-    MTS_IMPORT_TYPES(Scene, Sensor, Film, ImageBlock, Medium, Sampler)
+    MTS_IMPORT_TYPES(Scene, Sensor, StreakFilm, StreakImageBlock, Medium, Sampler)
 
     /**
      * \brief Sample the incident radiance along a ray.
@@ -99,9 +100,8 @@ public:
                         const RayDifferential3f &ray,
                         const Medium *medium = nullptr,
                         Float *aovs = nullptr,
-                        std::vector<std::tuple<Spectrum, Mask, Float>> &radianceSamplesRecordVector = {},
-                        std::pair<Spectrum, Mask> &radiance = {},
-                        Mask active = true) const;
+                        Mask active = true,
+                        std::vector<RadianceSample<Float, Spectrum, Mask>> &radianceSamplesRecordVector = {}) const;
 
     /**
      * For integrators that return one or more arbitrary output variables
@@ -139,11 +139,11 @@ protected:
     virtual ~TransientSamplingIntegrator();
 
     virtual void render_block(const Scene *scene, const Sensor *sensor,
-                              Sampler *sampler, ImageBlock *block, Float *aovs,
+                              Sampler *sampler, StreakImageBlock *block, Float *aovs,
                               size_t sample_count, size_t block_id) const;
 
     void render_sample(const Scene *scene, const Sensor *sensor,
-                       Sampler *sampler, ImageBlock *block, Float *aovs,
+                       Sampler *sampler, StreakImageBlock *block, Float *aovs,
                        const Vector2f &pos, ScalarFloat diff_scale_factor,
                        Mask active = true) const;
 

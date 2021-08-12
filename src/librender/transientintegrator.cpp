@@ -8,7 +8,7 @@
 #include <mitsuba/core/timer.h>
 #include <mitsuba/core/util.h>
 #include <mitsuba/core/warp.h>
-#include <mitsuba/render/film.h>
+#include <mitsuba/render/streakfilm.h>
 #include <mitsuba/render/transientintegrator.h>
 #include <mitsuba/render/sampler.h>
 #include <mitsuba/render/sensor.h>
@@ -57,7 +57,7 @@ MTS_VARIANT bool TransientSamplingIntegrator<Float, Spectrum>::render(Scene *sce
     ScopedPhase sp(ProfilerPhase::Render);
     m_stop = false;
 
-    ref<Film> film = sensor->film();
+    ref<StreakFilm> film = dynamic_cast<StreakFilm *>(sensor->film());
     ScalarVector2i film_size = film->crop_size();
 
     size_t total_spp        = sensor->sampler()->sample_count();
@@ -116,8 +116,13 @@ MTS_VARIANT bool TransientSamplingIntegrator<Float, Spectrum>::render(Scene *sce
             [&](const tbb::blocked_range<size_t> &range) {
                 ScopedSetThreadEnvironment set_env(env);
                 ref<Sampler> sampler = sensor->sampler()->clone();
-                ref<ImageBlock> block = new ImageBlock(m_block_size, channels.size(),
+                ref<StreakImageBlock> block = new StreakImageBlock(m_block_size,
+                                                       film->time(),
+                                                       film->exposure_time(),
+                                                       film->time_offset(),
+                                                       channels.size(),
                                                        film->reconstruction_filter(),
+                                                       film->time_reconstruction_filter(),
                                                        !has_aovs);
                 scoped_flush_denormals flush_denormals(true);
                 std::unique_ptr<Float[]> aovs(new Float[channels.size()]);
@@ -126,7 +131,8 @@ MTS_VARIANT bool TransientSamplingIntegrator<Float, Spectrum>::render(Scene *sce
                 for (auto i = range.begin(); i != range.end() && !should_stop(); ++i) {
                     auto [offset, size, block_id] = spiral.next_block();
                     Assert(hprod(size) != 0);
-                    block->set_size(size);
+                    // TODO: look where does time come from
+                    block->set_size(size, film->time());
                     block->set_offset(offset);
 
                     render_block(scene, sensor, sampler, block,
@@ -157,9 +163,14 @@ MTS_VARIANT bool TransientSamplingIntegrator<Float, Spectrum>::render(Scene *sce
         if (samples_per_pass != 1)
             idx /= (uint32_t) samples_per_pass;
 
-        ref<ImageBlock> block = new ImageBlock(film_size, channels.size(),
-                                               film->reconstruction_filter(),
-                                               !has_aovs);
+        ref<StreakImageBlock> block = new StreakImageBlock(m_block_size,
+                                                           film->time(),
+                                                           film->exposure_time(),
+                                                           film->time_offset(),
+                                                           channels.size(),
+                                                           film->reconstruction_filter(),
+                                                           film->time_reconstruction_filter(),
+                                                           !has_aovs);
         block->clear();
         block->set_offset(sensor->film()->crop_offset());
 
@@ -186,7 +197,7 @@ MTS_VARIANT bool TransientSamplingIntegrator<Float, Spectrum>::render(Scene *sce
 MTS_VARIANT void TransientSamplingIntegrator<Float, Spectrum>::render_block(const Scene *scene,
                                                                    const Sensor *sensor,
                                                                    Sampler *sampler,
-                                                                   ImageBlock *block,
+                                                                   StreakImageBlock *block,
                                                                    Float *aovs,
                                                                    size_t sample_count_,
                                                                    size_t block_id) const {
@@ -216,9 +227,11 @@ MTS_VARIANT void TransientSamplingIntegrator<Float, Spectrum>::render_block(cons
         // Ensure that the sample generation is fully deterministic
         sampler->seed(block_id);
 
+        uint32_t a = pixel_count * sample_count;
         for (auto [index, active] : range<UInt32>(pixel_count * sample_count)) {
             if (should_stop())
                 break;
+            Float b = index;
             Point2u pos = enoki::morton_decode<Point2u>(index / UInt32(sample_count));
             active &= !any(pos >= block->size());
             pos += block->offset();
@@ -239,7 +252,7 @@ MTS_VARIANT void
 TransientSamplingIntegrator<Float, Spectrum>::render_sample(const Scene *scene,
                                                    const Sensor *sensor,
                                                    Sampler *sampler,
-                                                   ImageBlock *block,
+                                                   StreakImageBlock *block,
                                                    Float *aovs,
                                                    const Vector2f &pos,
                                                    ScalarFloat diff_scale_factor,
@@ -266,10 +279,81 @@ TransientSamplingIntegrator<Float, Spectrum>::render_sample(const Scene *scene,
     ray.scale_differential(diff_scale_factor);
 
     const Medium *medium = sensor->medium();
-    // TR std::pair<Spectrum, Mask> result = sample(scene, sampler, ray, medium, aovs + 5, active);
-    std::pair<Spectrum, Mask> radiance;
-    std::vector<std::tuple<Spectrum, Mask, Float>> radianceSamplesRecordVector;
-    sample(scene, sampler, ray, medium, aovs + 5, radianceSamplesRecordVector, radiance, active);
+    std::vector<RadianceSample<Float, Spectrum, Mask>> radianceSamplesRecordVector;
+    // TODO: look if aovs + 5 is a in/out parameter for a single sample, because in that case now it does not work
+    sample(scene, sampler, ray, medium, aovs + 5, active, radianceSamplesRecordVector);
+
+    /**
+    // Si lo sumo aquí, va todo bien y la foto tiene sentido
+    Spectrum radiance(0.f);
+    std::vector<RadianceSample<Float, Spectrum, Mask>> vvv;
+    for(const auto &radianceSample : radianceSamplesRecordVector) {
+        radiance[radianceSample.mask] += radianceSample.radiance;
+    }
+    vvv.emplace_back(0.f, radiance, true);
+     **/
+
+    std::vector<RadianceSample<Float, UnpolarizedSpectrum, Mask>> radianceSampleVector_u = {};
+    for(const auto &radianceSampleRecord : radianceSamplesRecordVector) {
+        radianceSampleVector_u.emplace_back(
+            radianceSampleRecord.time,
+            depolarize(radianceSampleRecord.radiance * ray_weight),
+            radianceSampleRecord.mask
+        );
+    }
+    std::vector<RadianceSample<Float, Color3f, Mask>> xyzVector;
+    if constexpr (is_monochromatic_v<Spectrum>) {
+        ENOKI_MARK_USED(ray.wavelengths);
+        for(const auto &radianceSampleRecord_u : radianceSampleVector_u) {
+            xyzVector.emplace_back(
+                radianceSampleRecord_u.time,
+                radianceSampleRecord_u.radiance.x(),
+                radianceSampleRecord_u.mask
+            );
+        }
+    } else if constexpr (is_rgb_v<Spectrum>) {
+        ENOKI_MARK_USED(ray.wavelengths);
+        for(const auto &radianceSampleRecord_u : radianceSampleVector_u) {
+            xyzVector.emplace_back(
+                radianceSampleRecord_u.time,
+                srgb_to_xyz(radianceSampleRecord_u.radiance, radianceSampleRecord_u.mask),
+                // radianceSampleRecord_u.radiance,
+                radianceSampleRecord_u.mask
+            );
+        }
+    } else {
+        static_assert(is_spectral_v<Spectrum>);
+        for(const auto &radianceSampleRecord_u : radianceSampleVector_u) {
+            xyzVector.emplace_back(
+                radianceSampleRecord_u.time,
+                spectrum_to_xyz(radianceSampleRecord_u.radiance, ray.wavelengths, radianceSampleRecord_u.mask),
+                radianceSampleRecord_u.mask
+            );
+        }
+    }
+
+    // Si lo sumo aquí, va todo bien y la foto tiene sentido
+    Color3f radiance(0.f);
+    std::vector<RadianceSample<Float, Color3f, Mask>> vvv;
+    for(const auto &radianceSample : xyzVector) {
+        radiance[radianceSample.mask] += radianceSample.radiance;
+    }
+    vvv.emplace_back(0.f, radiance, true);
+
+    std::vector<RadianceSample<Float, std::array<Float, 5>, Mask>> values;
+    for(const auto &xyzRecord: xyzVector) {
+        std::array<Float, 5> color;
+        color[0] = xyzRecord.radiance.x();
+        color[1] = xyzRecord.radiance.y();
+        color[2] = xyzRecord.radiance.z();
+        color[3] = select(xyzRecord.mask, Float(1.f), Float(0.f));
+        color[4] = 1.f;
+        values.emplace_back(xyzRecord.time, color, xyzRecord.mask);
+    }
+
+    block->put(position_sample, values);
+
+    /**
     radiance.first = ray_weight * radiance.first;
 
     UnpolarizedSpectrum spec_u = depolarize(radiance.first);
@@ -291,6 +375,7 @@ TransientSamplingIntegrator<Float, Spectrum>::render_sample(const Scene *scene,
     aovs[4] = 1.f;
 
     block->put(position_sample, aovs, active);
+     **/
 
     sampler->advance();
 }
@@ -301,9 +386,8 @@ TransientSamplingIntegrator<Float, Spectrum>::sample(const Scene * /* scene */,
                                             const RayDifferential3f & /* ray */,
                                             const Medium * /* medium */,
                                             Float * /* aovs */,
-                                            std::vector<std::tuple<Spectrum, Mask, Float>> & /* radianceSamplesRecordVector */,
-                                            std::pair<Spectrum, Mask> & /* radiance */,
-                                            Mask /* active */) const {
+                                            Mask /* active */,
+                                            std::vector<RadianceSample<Float, Spectrum, Mask>> & /* radianceSamplesRecordVector */) const {
     NotImplementedError("sample");
 }
 

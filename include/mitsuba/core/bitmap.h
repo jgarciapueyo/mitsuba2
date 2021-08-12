@@ -739,7 +739,7 @@ void accumulate_3d(ConstT source,
     if (any(size <= 0))
         return;
 
-    int n = (int) (source_time * size.x() * channel_count);
+    int n = (int) (size.x() * source_time * channel_count);
 
     if constexpr (std::is_pointer_v<T>) {
         constexpr Value maxval = std::numeric_limits<Value>::max();

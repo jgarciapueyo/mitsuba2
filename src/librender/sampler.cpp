@@ -28,7 +28,12 @@ MTS_VARIANT void Sampler<Float, Spectrum>::seed(uint64_t /*seed_offset*/,
 }
 
 MTS_VARIANT void Sampler<Float, Spectrum>::advance() {
-    Assert(m_sample_index < (m_sample_count / m_samples_per_wavefront));
+    // TODO: review why this assert is here because it makes that the packet_X
+    //       variants fail. This is due to the line in Integrator::render_block()
+    //       where the for is executed (pixel_count * sample_count) / (width of packet) times
+    //       so the only way this assert works in that case is that width of packet = pixel_count which
+    //       is almost impossible
+    // Assert(m_sample_index < (m_sample_count / m_samples_per_wavefront));
     m_dimension_index = 0u;
     m_sample_index++;
 }

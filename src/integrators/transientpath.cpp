@@ -18,13 +18,9 @@ public:
     TransientPathIntegrator(const Properties &props) : Base(props) {}
 
     void sample(const Scene *scene, Sampler *sampler, const RayDifferential3f &ray_,
-                const Medium * /* medium */, Float * /* aovs */,
-                std::vector<std::tuple<Spectrum, Mask, Float>> &radianceSamplesRecordVector,
-                std::pair<Spectrum, Mask> &radiance,
-                Mask active) const override {
+                const Medium * /* medium */, Float * /* aovs */, Mask active,
+                std::vector<RadianceSample<Float, Spectrum, Mask>> &radianceSamplesRecordVector) const override {
         MTS_MASKED_FUNCTION(ProfilerPhase::SamplingIntegratorSample, active);
-
-        Float t = 0.f;
 
         RayDifferential3f ray = ray_;
 
@@ -34,24 +30,28 @@ public:
         // MIS weight for intersected emitters (set by prev. iteration)
         Float emission_weight(1.f);
 
-        Spectrum throughput(1.f), result(0.f);
+        Spectrum throughput(1.f);
+
+        // Time associated to a path
+        Float time(0.f);
 
         // ---------------------- First intersection ----------------------
 
         SurfaceInteraction3f si = scene->ray_intersect(ray, active);
-        Mask valid_ray          = si.is_valid();
-        EmitterPtr emitter      = si.emitter(scene);
+        Mask valid_ray = si.is_valid();
+        EmitterPtr emitter = si.emitter(scene);
 
         for (int depth = 1;; ++depth) {
-            t += si.distance(ray); //TODO: ior
+
+            time += si.distance(ray); // TODO: ior
 
             // ---------------- Intersection with emitters ----------------
 
             if (any_or<true>(neq(emitter, nullptr))) {
-                result[active] += emission_weight * throughput * emitter->eval(si, active);
-                Spectrum temp(0.f);
-                temp[active] = emission_weight * throughput * emitter->eval(si, active);
-                radianceSamplesRecordVector.emplace_back(temp, valid_ray, t);
+                Spectrum radiance(0.f);
+                radiance[active] += emission_weight * throughput * emitter->eval(si, active);
+                Mask path_finished = active;
+                radianceSamplesRecordVector.emplace_back(time, radiance, path_finished);
             }
 
             active &= si.is_valid();
@@ -84,7 +84,6 @@ public:
                 auto [ds, emitter_val] =
                     scene->sample_emitter_direction(si, sampler->next_2d(active_e), true, active_e);
                 active_e &= neq(ds.pdf, 0.f);
-                Float ts = ds.dist;
 
                 // Query the BSDF for that emitter-sampled direction
                 Vector3f wo       = si.to_local(ds.d);
@@ -96,11 +95,10 @@ public:
                 Float bsdf_pdf = bsdf->pdf(ctx, si, wo, active_e);
 
                 Float mis = select(ds.delta, 1.f, mis_weight(ds.pdf, bsdf_pdf));
-                Spectrum temp(0.f);
-                temp[active_e] = mis * throughput * bsdf_val * emitter_val;
-                result[active_e] += mis * throughput * bsdf_val * emitter_val;
-                if(likely(any_or<true>(active_e)))
-                    radianceSamplesRecordVector.emplace_back(temp, valid_ray, ts + t);
+
+                Spectrum radiance(0.f);
+                radiance[active_e] += mis * throughput * bsdf_val * emitter_val;
+                radianceSamplesRecordVector.emplace_back(time + ds.dist, radiance, active_e);
             }
 
             // ----------------------- BSDF sampling ----------------------
@@ -137,14 +135,6 @@ public:
 
             si = std::move(si_bsdf);
         }
-
-        Spectrum resultRecord = 0.f;
-        for (const auto &radianceDistance : radianceSamplesRecordVector) {
-            Float distance = std::get<2>(radianceDistance);
-            resultRecord += select((1800.f < distance) & (distance < 2000.f), std::get<0>(radianceDistance), 0.f);
-        }
-
-        radiance = { resultRecord, valid_ray };
     }
 
     //! @}

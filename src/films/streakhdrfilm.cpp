@@ -188,7 +188,7 @@ public:
         ref<Bitmap> source = new Bitmap(
             m_channels.size() != 5 ? Bitmap::PixelFormat::MultiChannel : Bitmap::PixelFormat::XYZAW,
             struct_type_v<ScalarFloat>,
-            m_storage->size(),
+            {m_storage->size().x() * m_storage->time(), m_storage->size().y()},
             m_storage->channel_count(),
             (uint8_t *) m_storage->data().managed().data()
             );
@@ -200,7 +200,8 @@ public:
 
         ref<Bitmap> target = new Bitmap(
             has_aovs ? Bitmap::PixelFormat::MultiChannel : m_pixel_format,
-            m_component_format, m_storage->size(),
+            m_component_format,
+            {m_storage->size().x() * m_storage->time(), m_storage->size().y()},
             has_aovs ? (m_storage->channel_count() - 1) : 0);
 
         if (has_aovs) {
@@ -371,6 +372,33 @@ public:
             bitmap(i, false)->write(filename, m_file_format);
         }
     }
+
+
+    /**
+     * This method writes the streakimage as a single image of dimension [width x time, height]
+    void develop() override {
+
+        if (m_dest_file.empty())
+            Throw("Destination file not specified, cannot develop.");
+
+        fs::path filename = m_dest_file;
+        std::string proper_extension;
+        if (m_file_format == Bitmap::FileFormat::OpenEXR)
+            proper_extension = ".exr";
+        else if (m_file_format == Bitmap::FileFormat::RGBE)
+            proper_extension = ".rgbe";
+        else
+            proper_extension = ".pfm";
+
+        std::string extension = string::to_lower(filename.extension().string());
+        if (extension != proper_extension)
+            filename.replace_extension(proper_extension);
+
+        Log(Info, "\U00002714  Developing \"%s\" ..", filename.string());
+
+        bitmap(false)->write(filename, m_file_format);
+    }
+     **/
 
     void set_destination_file(const fs::path &dest_file) override {
         m_dest_file = dest_file;

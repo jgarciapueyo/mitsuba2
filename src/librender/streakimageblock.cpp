@@ -93,7 +93,7 @@ StreakImageBlock<Float, Spectrum>::put(const StreakImageBlock *block) {
 
 MTS_VARIANT void
 StreakImageBlock<Float, Spectrum>::put(
-    const Point2f &pos_, const std::vector<RadianceSample<Float, const Float *, Mask>> &values) {
+    const Point2f &pos_, const std::vector<RadianceSample<Float, std::array<Float, 5>, Mask>> &values) {
     ScopedPhase sp(ProfilerPhase::ImageBlockPut);
     Assert(m_filter != nullptr);
     // TODO: assert m_time_filter != nullptr and use it later
@@ -130,10 +130,10 @@ StreakImageBlock<Float, Spectrum>::put(
                 Log(Warn, "%s", oss.str());
                 active &= is_valid;
             }
-
-            // Check if pos_sensor_int is within the time range
-            active &= (0 <= pos_sensor_int && pos_sensor_int < m_time);
         }
+
+        // Check if pos_sensor_int is within the time range
+        active &= (0 <= pos_sensor_int && pos_sensor_int < m_time);
 
         ScalarFloat filter_radius = m_filter->radius();
         ScalarVector2i size       = m_size + 2 * m_border_size;
