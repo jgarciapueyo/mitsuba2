@@ -200,7 +200,7 @@ StreakImageBlock<Float, Spectrum>::put(
 MTS_VARIANT DynamicBuffer<Float> StreakImageBlock<Float, Spectrum>::data(int slice_) const {
     uint32_t values_per_slice = m_channel_count * m_time * width();
     uint32_t offset = values_per_slice * slice_;
-    DynamicBuffer<ScalarInt32> idx = arange<DynamicBuffer<ScalarInt32>>(offset, offset + values_per_slice);
+    DynamicBuffer<ScalarUInt32> idx = arange<DynamicBuffer<ScalarUInt32>>(offset, offset + values_per_slice);
     DynamicBuffer<Float> slice_x_t = gather<DynamicBuffer<Float>>(m_data, idx);
     return slice_x_t;
 }
