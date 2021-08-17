@@ -114,6 +114,7 @@ def write_video(streakimg_hdr_RGB: np.array, out_file: str, tonemap: cv.Tonemap)
     # 2. Iterate over the streak img frames
     for i in range(streakimg_hdr_RGB.shape[2]):
         img_temp = streakimg_hdr_RGB[:, :, i, :3]
+        img_temp[img_temp < 0] = 0.
         img_hdr_RGB = img_temp
         img_ldr_RGB = tonemap.process(img_hdr_RGB)
         writer.append_data((img_ldr_RGB * 255).astype(np.uint8))

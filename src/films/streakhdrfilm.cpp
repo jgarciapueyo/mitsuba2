@@ -140,7 +140,6 @@ public:
         m_storage->put(block);
     }
 
-
     bool develop(const ScalarPoint2i  &source_offset,
                  const ScalarVector2i &size,
                  const ScalarPoint2i  &target_offset,
