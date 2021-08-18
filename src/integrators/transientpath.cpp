@@ -43,7 +43,7 @@ public:
 
         for (int depth = 1;; ++depth) {
 
-            time += si.distance(ray); // TODO: ior
+            time += time_of_flight(si.distance(ray)) * eta;
 
             // ---------------- Intersection with emitters ----------------
 
