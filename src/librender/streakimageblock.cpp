@@ -93,7 +93,7 @@ StreakImageBlock<Float, Spectrum>::put(const StreakImageBlock *block) {
 
 MTS_VARIANT void
 StreakImageBlock<Float, Spectrum>::put(
-    const Point2f &pos_, const std::vector<RadianceSample<Float, std::array<Float, 5>, Mask>> &values) {
+    const Point2f &pos_, const std::vector<FloatTimeSample<Float, Mask>> &values) {
     ScopedPhase sp(ProfilerPhase::ImageBlockPut);
     Assert(m_filter != nullptr);
     // TODO: assert m_time_filter != nullptr and use it later
@@ -110,19 +110,19 @@ StreakImageBlock<Float, Spectrum>::put(
 
             if (m_warn_negative) {
                 for (uint32_t k = 0; k < m_channel_count; ++k)
-                    is_valid &= radianceSample.radiance[k] >= -1e-5f;
+                    is_valid &= radianceSample.values[k] >= -1e-5f;
             }
 
             if (m_warn_invalid) {
                 for (uint32_t k = 0; k < m_channel_count; ++k)
-                    is_valid &= enoki::isfinite(radianceSample.radiance[k]);
+                    is_valid &= enoki::isfinite(radianceSample.values[k]);
             }
 
             if (unlikely(any(active && !is_valid))) {
                 std::ostringstream oss;
                 oss << "Invalid sample value: [";
                 for (uint32_t i = 0; i < m_channel_count; ++i) {
-                    oss << radianceSample.radiance[i];
+                    oss << radianceSample.values[i];
                     if (i + 1 < m_channel_count)
                         oss << ", ";
                 }
@@ -183,7 +183,7 @@ StreakImageBlock<Float, Spectrum>::put(
 
                     enabled &= x <= hi.x();
                     ENOKI_NOUNROLL for (uint32_t k = 0; k < m_channel_count; ++k)
-                        scatter_add(m_data, radianceSample.radiance[k] * weight, offset + k, enabled);
+                        scatter_add(m_data, radianceSample.values[k] * weight, offset + k, enabled);
                 }
             }
         } else {
@@ -192,7 +192,7 @@ StreakImageBlock<Float, Spectrum>::put(
                                                lo.x() * m_time + pos_sensor_int);
             Mask enabled  = active && all(lo >= 0u && lo < size);
             ENOKI_NOUNROLL for (uint32_t k = 0; k < m_channel_count; ++k)
-                scatter_add(m_data, radianceSample.radiance[k], offset + k, enabled);
+                scatter_add(m_data, radianceSample.values[k], offset + k, enabled);
         }
     }
 }

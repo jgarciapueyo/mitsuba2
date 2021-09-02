@@ -149,22 +149,24 @@ public:
             }
         }
 
-        std::vector<RadianceSample<Float, std::array<Float, 5>, Mask>> values;
+        std::vector<FloatTimeSample<Float, Mask>> values;
         for(const auto &xyzRecord: xyzVector) {
-            std::array<Float, 5> color;
-            color[0] = xyzRecord.radiance.x();
-            color[1] = xyzRecord.radiance.y();
-            color[2] = xyzRecord.radiance.z();
-            color[3] = alpha;
-            color[4] = 1;
-            values.emplace_back(xyzRecord.time, color, xyzRecord.mask);
+            FloatTimeSample<Float, Mask> color(-1);
+            color.set_time(xyzRecord.time, xyzRecord.mask);
+            // Reversed
+            color.push_front(1.f);
+            color.push_front(select(xyzRecord.mask, Float(1.f), Float(0.f)));
+            color.push_front(xyzRecord.radiance.z());
+            color.push_front(xyzRecord.radiance.y());
+            color.push_front(xyzRecord.radiance.x());
+            values.push_back(color);
         }
         // TODO: before all the put methods returned Mask.
         put(pos, values);
     }
 
     // TODO: check if this approach of std::array<Float, 5> works for aovs
-    void put(const Point2f &pos, const std::vector<RadianceSample<Float, std::array<Float, 5>, Mask>> &values);
+    void put(const Point2f &pos, const std::vector<FloatTimeSample<Float, Mask>> &values);
 
     /// Clear everything to zero.
     void clear();

@@ -19,6 +19,7 @@
 
 NAMESPACE_BEGIN(mitsuba)
 
+
 template <typename Float, typename Spectrum>
 class MTS_EXPORT_RENDER TransientIntegrator
     : public Integrator<Float, Spectrum> {
@@ -99,7 +100,7 @@ public:
                         Sampler *sampler,
                         const RayDifferential3f &ray,
                         const Medium *medium = nullptr,
-                        Float *aovs = nullptr,
+                        std::vector<FloatTimeSample<Float, Mask>> &aovsRecordVector = {},
                         Mask active = true,
                         std::vector<RadianceSample<Float, Spectrum, Mask>> &radianceSamplesRecordVector = {}) const;
 
@@ -139,11 +140,13 @@ protected:
     virtual ~TransientSamplingIntegrator();
 
     virtual void render_block(const Scene *scene, const Sensor *sensor,
-                              Sampler *sampler, StreakImageBlock *block, Float *aovs,
+                              Sampler *sampler, StreakImageBlock *block,
+                              std::vector<FloatTimeSample<Float, Mask>> &aovsRecordVector,
                               size_t sample_count, size_t block_id) const;
 
     void render_sample(const Scene *scene, const Sensor *sensor,
-                       Sampler *sampler, StreakImageBlock *block, Float *aovs,
+                       Sampler *sampler, StreakImageBlock *block,
+                       std::vector<FloatTimeSample<Float, Mask>> &aovsRecordVector,
                        const Vector2f &pos, ScalarFloat diff_scale_factor,
                        Mask active = true) const;
 

@@ -9,8 +9,9 @@ import matplotlib.pyplot as plt
 
 import mitsuba
 
-mitsuba.set_variant("scalar_rgb")
+from tonemapper import *
 
+mitsuba.set_variant("scalar_mono_polarized")
 
 def read_steadyimg_mitsuba(dir: str, extension: str = "exr") -> np.array:
     from mitsuba.core import Bitmap, Struct, float_dtype
@@ -79,12 +80,7 @@ def diff_images(img1: np.array, img2: np.array):
     :return:
     """
     diff = streakimg_mitsuba - steadyimg_mitsuba
-    number_of_channels = diff.shape[2]
-    fig, axs = plt.subplots(number_of_channels)
-    for channel in range(number_of_channels):
-        axs[channel].imshow(diff[:, :, channel])
-        axs[channel].colorbar()
-    plt.show()
+    show_image(diff)
 
 
 def tonemap_wrapper(tonemap: cv.Tonemap, img_hdr_RGB: np.array) -> Tuple[np.array, np.array]:
@@ -117,6 +113,26 @@ def write_video(streakimg_hdr_RGB: np.array, out_file: str, tonemap: cv.Tonemap)
         img_temp[img_temp < 0] = 0.
         img_hdr_RGB = img_temp
         img_ldr_RGB = tonemap.process(img_hdr_RGB)
+        writer.append_data((img_ldr_RGB * 255).astype(np.uint8))
+    # 3. Write the video
+    writer.close()
+
+
+def write_video_custom(streakimg_hdr_RGB: np.array, out_file: str, tonemap: str):
+    """
+    Creates a video from a HDR streak image (dimensions [height, width, time, channels]) in RGB format. The tonemap is
+    needed to transform the HDR streak image to a LDR streak image.
+
+    :param streakimg_hdr:
+    :param tonemap:
+    """
+    # 1. Get the streak image (already done) and define the output
+    writer = imageio.get_writer(out_file + ".mp4", fps=10)
+    # 2. Iterate over the streak img frames
+    for i in range(streakimg_hdr_RGB.shape[2]):
+        img_temp = streakimg_hdr_RGB[:, :, i, :3]
+        img_hdr_RGB = img_temp
+        [img_ldr_RGB, _] = tonemap_custom(img_hdr_RGB, tonemap)
         writer.append_data((img_ldr_RGB * 255).astype(np.uint8))
     # 3. Write the video
     writer.close()
@@ -157,13 +173,24 @@ if __name__ == "__main__":
     if steadyimg_mitsuba is not None:
         diff_images(steadyimg_mitsuba, streakimg_mitsuba)
 
-    # Tonemapping of HDR images
+    # Tonemapping of HDR images (OPENCV)
+    """
     tonemap = cv.createTonemapReinhard(gamma=2.2, light_adapt=0., color_adapt=0.)
     steadyimg_mitsuba_ldr_RGB = None
     steadyimg_mitsuba_ldr_BGR = None
     if steadyimg_mitsuba:
         [steadyimg_mitsuba_ldr_RGB, steadyimg_mitsuba_ldr_BGR] = tonemap_wrapper(tonemap, steadyimg_mitsuba)
     [streakimg_mitsuba_ldr_RGB, streakimg_mitsuba_ldr_BGR] = tonemap_wrapper(tonemap, streakimg_mitsuba)
+    """
+
+    # Tonemapping for HDR images
+    steadyimg_mitsuba_ldr_RGB = None
+    steadyimg_mitsuba_ldr_BGR = None
+    if steadyimg_mitsuba:
+        [steadyimg_mitsuba_ldr_RGB, steadyimg_mitsuba_ldr_BGR] = tonemap_custom(steadyimg_mitsuba, "PN")
+    [streakimg_mitsuba_ldr_RGB, streakimg_mitsuba_ldr_BGR] = tonemap_custom(streakimg_mitsuba, "PN")
+
+    show_image(streakimg_mitsuba_ldr_RGB)
 
     # Show tonemapped images
     if steadyimg_mitsuba:
@@ -181,4 +208,4 @@ if __name__ == "__main__":
 
     # Write video of streak image
     name_video_file = args.dir + "/streak_video"
-    write_video(streakimg_mitsuba_original, name_video_file, tonemap)
+    write_video_custom(streakimg_mitsuba_original, name_video_file, "SRGB")

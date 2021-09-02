@@ -18,7 +18,9 @@ public:
     TransientPathIntegrator(const Properties &props) : Base(props) {}
 
     void sample(const Scene *scene, Sampler *sampler, const RayDifferential3f &ray_,
-                const Medium * /* medium */, Float * /* aovs */, Mask active,
+                const Medium * /* medium */,
+                std::vector<FloatTimeSample<Float, Mask>> & /* aovs */,
+                Mask active,
                 std::vector<RadianceSample<Float, Spectrum, Mask>> &radianceSamplesRecordVector) const override {
         MTS_MASKED_FUNCTION(ProfilerPhase::SamplingIntegratorSample, active);
 

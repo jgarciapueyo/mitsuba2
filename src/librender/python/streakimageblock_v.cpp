@@ -13,7 +13,9 @@ MTS_PY_EXPORT(StreakImageBlock) {
             "border"_a = true, "normalize"_a = false)
         .def("put", py::overload_cast<const StreakImageBlock *>(&StreakImageBlock::put),
             D(StreakImageBlock, put), "block"_a)
-        .def("put", vectorize(
+        /**
+        .def("put",
+             // TODO: for this version, vectorize has been deleted
              // TODO: check if it is possible to declare values as a vector of RadianceSample directly so there is no need to iterate to transform them (an thus, no need for the wrapper)
              [](StreakImageBlock &ib, const Point2f &pos, const wavelength_t<Spectrum> &wavelengths,
                  const std::vector<std::tuple<Float, Spectrum, Mask>> &values, const Float &alpha) {
@@ -22,7 +24,7 @@ MTS_PY_EXPORT(StreakImageBlock) {
                    values_transformed.emplace_back(time, data, mask);
                }
                ib.put(pos, wavelengths, values_transformed, alpha);
-             }), "pos"_a, "wavelengths"_a, "radianceSamplesRecordVector"_a, "alpha"_a = 1.f)
+             }, "pos"_a, "wavelengths"_a, "radianceSamplesRecordVector"_a, "alpha"_a = 1.f)
         .def("put",
             // TODO: check if it is possible to declare values as a vector of RadianceSample directly so there is no need to iterate to transform them (an thus, no need for the wrapper)
             [](StreakImageBlock &ib, const Point2f &pos,
@@ -35,6 +37,7 @@ MTS_PY_EXPORT(StreakImageBlock) {
                 }
                 ib.put(pos, values_transformed);
             }, "pos"_a, "values"_a)
+            **/
         .def_method(StreakImageBlock, clear)
         .def_method(StreakImageBlock, set_offset, "offset"_a)
         .def_method(StreakImageBlock, offset)
