@@ -79,7 +79,7 @@ def diff_images(img1: np.array, img2: np.array):
     show_image(diff)
 
 
-def write_video_custom(streakimg_ldr_RGB: np.array, filename: str):
+def write_video_custom(streakimg_ldr: np.array, filename: str):
     """
     Creates a video from a HDR streak image (dimensions [height, width, time, channels]) in RGB format. The tonemap is
     needed to transform the HDR streak image to a LDR streak image.
@@ -87,11 +87,13 @@ def write_video_custom(streakimg_ldr_RGB: np.array, filename: str):
     :param streakimg_hdr:
     :param tonemap:
     """
+    number_of_frames = streakimg_ldr.shape[2]
     # 1. Get the streak image (already done) and define the output
     writer = imageio.get_writer(filename + ".mp4", fps=10)
     # 2. Iterate over the streak img frames
-    for i in range(streakimg_ldr_RGB.shape[2]):
-        writer.append_data((streakimg_ldr_RGB[:, :, i, :3] * 255).astype(np.uint8))
+    for i in range(number_of_frames):
+        writer.append_data((streakimg_ldr[:, :, i, :3] * 255).astype(np.uint8))
+        print(f"{i}/{number_of_frames}", end="\r")
     # 3. Write the video
     writer.close()
 
@@ -126,10 +128,12 @@ if __name__ == "__main__":
     # Read steady image
     steadyimg = None
     if steady_img_exists:
+        print("Loading steady image")
         steadyimg = read_steadyimg_mitsuba(path_steady_img, extension=args.extension)
         steadyimg = steadyimg[:, :, :3]  # drop alpha
 
     # 2. Load streak image
+    print("Loading streak image")
     path_streak_img = args.dir + "/" + args.file_streak_image
     streakimg = read_streakimg_mitsuba(path_streak_img, extension=args.extension)
     streakimg = streakimg[:, :, :, :3]  # drop alpha
@@ -139,12 +143,14 @@ if __name__ == "__main__":
     # 3. Tonemapping for HDR images
     steadyimg_ldr = None
     if steadyimg:
+        print("Applying tonemap to steadyimg")
         steadyimg_ldr = tonemap(steadyimg,
                                 normalize=args.normalize,
                                 exposure=args.exposure,
                                 offset=args.offset,
                                 tonemapper=args.tonemapper,
                                 gamma=args.gamma)
+    print("Applying tonemap to streak image accumulated")
     streakimg_acc_ldr = tonemap(streakimg_acc,
                                 normalize=args.normalize,
                                 exposure=args.exposure,
@@ -168,17 +174,21 @@ if __name__ == "__main__":
 
     # 6. Write LDR images
     if steadyimg_ldr is not None:
+        print("Writing steady image")
         name_steadyimg_file = args.dir + "/steadyimg.png"
         imageio.imwrite(name_steadyimg_file, (steadyimg_ldr * 255).astype(np.uint8))
+    print("Writing streak image accumulated")
     name_streakimg_file = args.dir + "/streakimg_accumulated.png"
     imageio.imwrite(name_streakimg_file, (streakimg_acc_ldr * 255).astype(np.uint8))
 
     # 7. Write video of streak image
     name_video_file = args.dir + "/streak_video"
+    print("Applying tonemap to streak image")
     tonemap(streakimg,
             normalize=args.normalize,
             exposure=args.exposure,
             offset=args.offset,
             tonemapper=args.tonemapper,
             gamma=args.gamma)
+    print("Writing streak image video")
     write_video_custom(streakimg, filename=name_video_file)
