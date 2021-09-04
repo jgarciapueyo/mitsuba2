@@ -1,34 +1,30 @@
-from typing import Tuple
-
-import cv2 as cv
 import numpy as np
 import matplotlib.pyplot as plt
 
-def toSRGB(linear: float, gamma: float = 2.4):
+
+def apply_normalization(img: np.array) -> np.array:
+    maximum = img.max()
+    minimum = img.min()
+    factor = 1 / (maximum - minimum)
+    return (img - minimum) * factor
+
+
+def tonemap_SRGB(img: np.array, gamma: float = 2.2) -> np.array:
     a = 0.055
-    if linear <= 0.0031308:
-        return 12.92 * linear
-    else:
-        return (1 + a) * pow(linear, 1 / gamma) - a
+    img_tonemapped = np.where(img <= 0.0031308,
+                              img * 12.92,
+                              (1 + a) * np.power(img, 1 / gamma) - a)
+    return np.clip(img_tonemapped, a_min=0., a_max=1.)
 
 
-def tonemap_SRGB(img_hdr_RGB: np.array) -> np.array:
-    vf = np.vectorize(toSRGB)
-    return np.clip(vf(img_hdr_RGB), a_min=0., a_max=1.)
+def tonemap_gamma(img: np.array, gamma: float = 2.2) -> np.array:
+    img_tonemapped = np.power(img, 1 / gamma)
+    return np.clip(img_tonemapped, a_min=0., a_max=1.)
 
 
-def to_gamma(value: float, gamma: float):
-    return pow(value, 1 / gamma)
-
-
-def tonemap_gamma(img_hdr_RGB: np.array, gamma: float = 2.2) -> np.array:
-    vf = np.vectorize(to_gamma)
-    return np.clip(vf(img_hdr_RGB, gamma), a_min=0., a_max=1.)
-
-
-def tonemap_falsenegative(img_hdr_RGB: np.array) -> np.array:
-    channelR = -2 * img_hdr_RGB.clip(max=0.).mean(axis=-1)
-    channelG = 2 * img_hdr_RGB.clip(min=0.).mean(axis=-1)
+def tonemap_falsenegative(img: np.array) -> np.array:
+    channelR = -2 * img.clip(max=0.).mean(axis=-1)
+    channelG = 2 * img.clip(min=0.).mean(axis=-1)
     channelB = np.zeros(channelG.shape)
     img_mapped = np.stack((channelR, channelG, channelB), axis=-1)
     return np.clip(img_mapped, a_min=0., a_max=1.)
@@ -43,17 +39,29 @@ def show_image(img: np.array):
     plt.show()
 
 
-def tonemap_custom(img_hdr_RGB: np.array, tonemap: str) -> Tuple[np.array, np.array]:
-    img_ldr_RGB = None
-    if tonemap == "SRGB":
-        img_ldr_RGB = tonemap_SRGB(img_hdr_RGB)
-    elif tonemap == "GAMMA":
-        img_ldr_RGB = tonemap_gamma(img_hdr_RGB)
-    elif tonemap == "PN":
-        img_ldr_RGB = tonemap_falsenegative(img_hdr_RGB)
+def tonemap(img: np.array,
+            normalize: bool = False,
+            exposure: float = 0.,
+            offset: float = 0.,
+            tonemapper: float = "SRGB",
+            gamma: float = 2.2) -> np.array:
+    if normalize:
+        img = apply_normalization(img)
+
+    if exposure != 0.:
+        img = np.pow(2, exposure) * img
+
+    if offset != 0.:
+        img = img + offset
+
+    if tonemapper == "SRGB":
+        img = tonemap_SRGB(img, gamma)
+    elif tonemapper == "GAMMA":
+        img = tonemap_gamma(img, gamma)
+    elif tonemapper == "PN":
+        img = tonemap_falsenegative(img)
     else:
         raise "UNKNOWN TONEMAPPER"
 
-    img_ldr_RGB = img_ldr_RGB.astype(np.float32)
-    img_ldr_BGR = cv.cvtColor(img_ldr_RGB, code=cv.COLOR_RGB2BGR)
-    return img_ldr_RGB, img_ldr_BGR
+    img = img.astype(np.float32)
+    return img
