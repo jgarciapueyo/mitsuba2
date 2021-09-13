@@ -1,5 +1,6 @@
 import argparse
 import glob
+from pathlib import Path
 
 import imageio
 
@@ -79,6 +80,17 @@ def diff_images(img1: np.array, img2: np.array):
     show_image(diff)
 
 
+def maxmin(img: np.array):
+    if len(img.shape) == 3:
+        axis = (0,1)
+    else:
+        axis = (0,1,2)
+
+    maximum = np.amax(img, axis=axis)
+    minimum = np.amin(img, axis=axis)
+    print(f"Max: {str(maximum)} - Min: {str(minimum)}")
+
+
 def write_video_custom(streakimg_ldr: np.array, filename: str):
     """
     Creates a video from a HDR streak image (dimensions [height, width, time, channels]) in RGB format. The tonemap is
@@ -96,6 +108,23 @@ def write_video_custom(streakimg_ldr: np.array, filename: str):
         print(f"{i}/{number_of_frames}", end="\r")
     # 3. Write the video
     writer.close()
+
+
+def write_frames(streakimg_ldr: np.array, folder: str):
+    """
+    Writes the frames separately of a HDR streak image.
+
+    :param streakimg:
+    :param filename:
+    :return:
+    """
+    Path(folder).mkdir(parents=True, exist_ok=True)
+    number_of_frames = streakimg.shape[2]
+    # 2. Iterate over the streak img frames
+    for i in range(number_of_frames):
+        frame = (streakimg_ldr[:, :, i, :3] * 255).astype(np.uint8)
+        imageio.imwrite(folder + f"/frame_{str(i)}.png", frame)
+        print(f"{i}/{number_of_frames}", end="\r")
 
 
 if __name__ == "__main__":
@@ -117,6 +146,8 @@ if __name__ == "__main__":
     parser.add_argument('-o', '--offset', type=float, help="Offset: value + offset_value", default=0)
     parser.add_argument('-t', '--tonemapper', type=str, help="Tonemapper applied: SRGB, GAMMA, PN", default="SRGB")
     parser.add_argument('-g', '--gamma', type=float, help="Float value of the gamma", default=2.2)
+    # Options for result
+    parser.add_argument('-r', '--result', type=str, nargs='+', help="Result: video (v), frames (f)", default=["v"])
     args = parser.parse_args()
 
     # 1. Load steady image (if it exists)
@@ -131,6 +162,7 @@ if __name__ == "__main__":
         print("Loading steady image")
         steadyimg = read_steadyimg_mitsuba(path_steady_img, extension=args.extension)
         steadyimg = steadyimg[:, :, :3]  # drop alpha
+        maxmin(steadyimg)
 
     # 2. Load streak image
     print("Loading streak image")
@@ -142,7 +174,7 @@ if __name__ == "__main__":
 
     # 3. Tonemapping for HDR images
     steadyimg_ldr = None
-    if steadyimg:
+    if steadyimg is not None:
         print("Applying tonemap to steadyimg")
         steadyimg_ldr = tonemap(steadyimg,
                                 normalize=args.normalize,
@@ -150,6 +182,7 @@ if __name__ == "__main__":
                                 offset=args.offset,
                                 tonemapper=args.tonemapper,
                                 gamma=args.gamma)
+        maxmin(steadyimg_ldr)
     print("Applying tonemap to streak image accumulated")
     streakimg_acc_ldr = tonemap(streakimg_acc,
                                 normalize=args.normalize,
@@ -157,6 +190,7 @@ if __name__ == "__main__":
                                 offset=args.offset,
                                 tonemapper=args.tonemapper,
                                 gamma=args.gamma)
+    maxmin(streakimg_acc_ldr)
 
     # 4. Comparison of steady and streak (accumulated)
     if args.show and steadyimg is not None:
@@ -164,7 +198,7 @@ if __name__ == "__main__":
 
     # 5. Show tonemapped images
     if args.show:
-        if steadyimg_ldr:
+        if steadyimg_ldr is not None:
             steadyimg_ldr_BGR = cv.cvtColor(steadyimg_ldr, code=cv.COLOR_RGB2BGR)
             cv.imshow("Steady Image", steadyimg_ldr_BGR)
         streakimg_acc_ldr_BGR = cv.cvtColor(streakimg_acc_ldr, code=cv.COLOR_RGB2BGR)
@@ -181,14 +215,23 @@ if __name__ == "__main__":
     name_streakimg_file = args.dir + "/streakimg_accumulated.png"
     imageio.imwrite(name_streakimg_file, (streakimg_acc_ldr * 255).astype(np.uint8))
 
-    # 7. Write video of streak image
-    name_video_file = args.dir + "/streak_video"
+    # 7. Apply tonemap to streak image
     print("Applying tonemap to streak image")
-    tonemap(streakimg,
-            normalize=args.normalize,
-            exposure=args.exposure,
-            offset=args.offset,
-            tonemapper=args.tonemapper,
-            gamma=args.gamma)
-    print("Writing streak image video")
-    write_video_custom(streakimg, filename=name_video_file)
+    streakimg_ldr = tonemap(streakimg,
+                            normalize=args.normalize,
+                            exposure=args.exposure,
+                            offset=args.offset,
+                            tonemapper=args.tonemapper,
+                            gamma=args.gamma)
+    maxmin(streakimg_ldr)
+
+    # 8. Write video of streak image
+    if "v" in args.result:
+        name_video_file = args.dir + "/streak_video"
+        print("Writing streak image video")
+        write_video_custom(streakimg_ldr, filename=name_video_file)
+
+    if "f" in args.result:
+        name_folder = args.dir + "/frames"
+        print("Writing frames separately")
+        write_frames(streakimg_ldr, folder=name_folder)

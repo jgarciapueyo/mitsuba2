@@ -49,7 +49,7 @@ def tonemap(img: np.array,
         img = apply_normalization(img)
 
     if exposure != 0.:
-        img = np.pow(2, exposure) * img
+        img = np.power(2, exposure) * img
 
     if offset != 0.:
         img = img + offset
