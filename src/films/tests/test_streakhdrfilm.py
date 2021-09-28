@@ -231,7 +231,6 @@ def test04_bitmap_slice(variant_scalar_rgb):
                                        block.channel_count()])
 
         # Get the values from the StreakImageBlock from inside the StreakFilm
-        # TODO: remove this if film.getStreakImageBlock gets deleted from the interface
         filmstreakimageblock = np.array(film.getStreakImageBlock().data(yslice), copy=False) \
             .reshape([block.width() + 2 * block.border_size(),
                       block.time(),

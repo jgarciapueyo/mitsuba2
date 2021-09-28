@@ -19,7 +19,19 @@
 
 NAMESPACE_BEGIN(mitsuba)
 
-
+/**
+ * \brief Abstract transient integrator base class, which does not make any
+ * assumptions with regards to how radiance is computed.
+ *
+ * In Mitsuba, the different rendering techniques are collectively referred to
+ * as \a integrators, since they perform integration over a high-dimensional space.
+ * Each transient integrator represents a specific approach for solving the transient
+ * light transport equation.
+ *
+ * This is the base class of all transient integrators; it does not make any
+ * assumptions on how radiance is computed, which allows for many different
+ * kinds of implementations.
+ */
 template <typename Float, typename Spectrum>
 class MTS_EXPORT_RENDER TransientIntegrator
     : public Integrator<Float, Spectrum> {
@@ -48,6 +60,13 @@ protected:
     virtual ~TransientIntegrator();
 };
 
+/** \brief Transient Integrator based on Monte Carlo sampling
+ *
+ * This transient integrator performs Monte Carlo integration to return an
+ * umbiesed statistical estimate of the radiance value along a given ray. The
+ * default implementation of the \ref render() method then repeatedly invokes
+ * this estimator to compute all pixels of the image.
+ */
 template <typename Float, typename Spectrum>
 class MTS_EXPORT_RENDER TransientSamplingIntegrator
     : public TransientIntegrator<Float, Spectrum> {
@@ -74,14 +93,15 @@ public:
      * \param active
      *    A mask that indicates which SIMD lanes are active
      *
-     * \param aov
-     *    Integrators may return one or more arbitrary output variables (AOVs)
-     *    via this parameter. If \c nullptr is provided to this argument, no
-     *    AOVs should be returned. Otherwise, the caller guarantees that space
-     *    for at least <tt>aov_names().size()</tt> entries has been allocated.
+     * \param aovsRecordVector
+     *    Integrators may return a list with one or more arbitrary output
+     *    variables (AOVs) for each sample via this parameter. If \c nullptr is
+     *    provided to this argument, no AOVs should be returned. Otherwise, the
+     *    caller guarantees that space for at least <tt>aov_names().size()</tt>
+     *    entries has been allocated.
      *
-     * \param radiance
-     *    Integrator must return a pair containing a spectrum and a mask
+     * \param radianceSamplesRecordVector
+     *    Integrator must return a list of samples containing a spectrum and a mask
      *    specifying whether a surface or medium interaction was sampled.
      *    False mask entries indicate that the ray "escaped" the scene, in
      *    which case the the returned spectrum contains the contribution of
@@ -181,9 +201,9 @@ protected:
 };
 
 /*
- * \brief Base class of all recursive Monte Carlo integrators, which compute
- * unbiased solutions to the rendering equation (and optionally the radiative
- * transfer equation).
+ * \brief Base class of all recursive Transient Monte Carlo integrators,
+ * which compute unbiased solutions to the transient rendering equation
+ * (and optionally the radiative transfer equation).
  */
 template <typename Float, typename Spectrum>
 class MTS_EXPORT_RENDER TransientMonteCarloIntegrator

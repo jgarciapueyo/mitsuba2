@@ -27,7 +27,7 @@ public:
     /// Merge an image block into the film. This methods should be thread-safe.
     virtual void put(const StreakImageBlock *block) = 0;
 
-    // TODO: fill documentation
+    /// Return the bitmap object storing the developed contents of the film corresponding to the i-th slice x-t
     virtual ref<Bitmap> bitmap(int slice, bool raw) = 0;
 
     // =============================================================

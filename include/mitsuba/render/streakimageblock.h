@@ -9,7 +9,14 @@
 NAMESPACE_BEGIN(mitsuba)
 
 /**
- * TODO:
+ * \brief Storage for a streak image sub-block (a.k.a render bucket)
+ *
+ * This class is used by image-based parallel processes and encapsulates
+ * computed rectangular spatial dimensions of a streak image (and all the temporal dimensions).
+ * This allows for easy and efficient distributed rendering of large images.
+ * Image blocks usually also include a border region storing contributions that
+ * slightly outside of the block, which is required to support image reconstruction
+ * filters.
  */
 template <typename Float, typename Spectrum>
 class MTS_EXPORT_RENDER StreakImageBlock : public Object {
@@ -22,14 +29,15 @@ public:
      * \param size
      *    Specifies the block dimensions (not accounting for additional
      *    border pixels required to support image reconstruction filters).
-     *    Because it is a Streak Image Block, the size is 3D.
      *
-     * // TODO: see if StreakImageBlock should be agnostic to this and the third
-     * //       dimension should be part of size as Vector3i and delete time_resolution/exposuretime
-     * //       since that would be part of the film containing the streak img block
      * \param time_resolution
+     *    Specifies the temporal dimension of the Streak Film.
      *
      * \param exposure_time
+     *   Specifies the effective exposure time of every temporal window (time frame).
+     *
+     * \param time_offset
+     *   Specifies the minimum path length recorded by the streak image block.
      *
      * \param channel_count
      *    Specifies the number of image channels.
@@ -161,11 +169,26 @@ public:
             color.push_front(xyzRecord.radiance.x());
             values.push_back(color);
         }
-        // TODO: before all the put methods returned Mask.
         put(pos, values);
     }
 
-    // TODO: check if this approach of std::array<Float, 5> works for aovs
+
+    /**
+     * \brief Store a list of samples inside the block.
+     *
+     * \note This method is only valid if a reconstruction filter was provided
+     * when the block was constructed.
+     *
+     * \param pos
+     *    Denotes the sample position in fractional pixel coordinates. It is
+     *    not checked, and so must be valid. The block's offset is subtracted
+     *    from the given position to obtain the final pixel position.
+     *
+     * \param values
+     *    List of samples. Each sample contains an array containing each channel
+     *    of the sample values. The array length of each sample must match the
+     *    length given by \ref channel_count()
+     */
     void put(const Point2f &pos, const std::vector<FloatTimeSample<Float, Mask>> &values);
 
     /// Clear everything to zero.
@@ -207,7 +230,6 @@ public:
     size_t height() const { return m_size.y(); }
 
     /// Return the bitmap's length in pixels
-    // TODO: change if size is transformed to a Vector3i and delete m_exposure_time
     size_t length() const { return m_time; }
 
     /// Warn when writing invalid (NaN, +/- infinity) sample values?

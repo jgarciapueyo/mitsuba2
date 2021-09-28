@@ -68,10 +68,13 @@ public:
                 throughput *= rcp(q);
             }
 
+
             // Stop if we've exceeded the number of requested bounces, or
             // if there are no more active lanes. Only do this latter check
             // in GPU mode when the number of requested bounces is infinite
             // since it causes a costly synchronization.
+            // TODO: add another termination condition when path length is greater than max path length
+            //       (time > offset + exp*time)
             if ((uint32_t) depth >= (uint32_t) m_max_depth ||
                 ((!is_cuda_array_v<Float> || m_max_depth < 0) && none(active)))
                 break;

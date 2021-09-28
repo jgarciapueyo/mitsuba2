@@ -12,7 +12,58 @@
 NAMESPACE_BEGIN(mitsuba)
 
 /**!
- * //TODO: add documentation
+
+.. _film-streakhdrfilm:
+
+High dynamic range streak film (:monosp:`streakhdrfilm`)
+--------------------------------------------------------
+
+.. pluginparameters::
+
+* - width, height
+  - |int|
+  - Width and height of the camera sensor in pixels Default: 768, 576)
+* - time
+  - |int|
+  - Time resolution of the streak film
+* - exposure_time
+  - |float|
+  - Effective exposure time of each of the time frames (in optical distance).
+* - time_offset
+  - |float|
+  - Time offset of the sensor (in optical distance). It can be interpreted as the minimal path length that will be stored.
+* - file_format
+  - |string|
+  - Denotes the desired output file format. The options are :monosp:`openexr`
+    (for ILM's OpenEXR format), :monosp:`rgbe` (for Greg Ward's RGBE format), or
+    :monosp:`pfm` (for the Portable Float Map format). (Default: :monosp:`openexr`)
+* - pixel_format
+  - |string|
+  - Specifies the desired pixel format of output images. The options are :monosp:`luminance`,
+    :monosp:`luminance_alpha`, :monosp:`rgb`, :monosp:`rgba`, :monosp:`xyz` and :monosp:`xyza`.
+    (Default: :monosp:`rgba`)
+* - component_format
+  - |string|
+  - Specifies the desired floating  point component format of output images. The options are
+    :monosp:`float16`, :monosp:`float32`, or :monosp:`uint32`. (Default: :monosp:`float16`)
+* - crop_offset_y, crop_offset_y, crop_width, crop_height
+  - |int|
+  - These parameters can optionally be provided to select a sub-rectangle
+    of the output. In this case, only the requested regions
+    will be rendered. (Default: Unused)
+* - high_quality_edges
+  - |bool|
+  - If set to |true|, regions slightly outside of the film plane will also be sampled. This may
+    improve the image quality at the edges, especially when using very large reconstruction
+    filters. In general, this is not needed though. (Default: |false|, i.e. disabled)
+* - rfilter
+  - :paramtype:`rfilter`
+  - Reconstruction filter that should be used by the film in the spatial dimension. (Default: :monosp:`gaussian`, a windowed
+    Gaussian filter)
+* - tfilter
+  - :paramtype:`rfilter`
+  - (NOT IMPLEMENTED; right now this is done in the postprocessing step in Python) Reconstruction filter that should be used by the film in the temporal dimension. (Default: :monosp:`gaussian`, a windowed
+    Gaussian filter)
  */
 
 template <typename Float, typename Spectrum>
@@ -271,10 +322,10 @@ public:
             (uint8_t *) dslice.managed().data()
             // This second option should work too (similar to hdrfilm.cpp), but I do not why,
             // it makes the first 4 values of the slice to be corrupt/incorrect. The upper way
-            // doing it in two steps, makes it work. It probably has to do with some innerworkings
-            // of Enoki and how m_storage->data(int slice) returns a DynamicBuffer as a copy and not
-            // as a reference to m_storage.
-            // (uint8_t *) m_storage->data(slice).managed().data()
+            // doing it in two steps with the variable dslice, makes it work. It probably has
+            // to do with some innerworkings of Enoki and how m_storage->data(int slice)
+            // returns a DynamicBuffer as a copy and not as a reference to m_storage.
+            //--> (uint8_t *) m_storage->data(slice).managed().data()
             );
 
         if (raw)
@@ -371,7 +422,6 @@ public:
             bitmap(i, false)->write(filename, m_file_format);
         }
     }
-
 
     /**
      * This method writes the streakimage as a single image of dimension [width x time, height]

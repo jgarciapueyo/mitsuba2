@@ -49,8 +49,9 @@ High dynamic range film (:monosp:`hdrfilm`)
      filters. In general, this is not needed though. (Default: |false|, i.e. disabled)
  * - (Nested plugin)
    - :paramtype:`rfilter`
-   - Reconstruction filter that should be used by the film. (Default: :monosp:`gaussian`, a windowed
-     Gaussian filter)
+   - (Updated for Transient; now it is needed to add the name="rfilter" attribute in the XML
+     description of the scene [<rfilter name="rfilter" type="..."/>) Reconstruction filter
+     that should be used by the film.  (Default: :monosp:`gaussian`, a windowed Gaussian filter)
 
 This is the default film plugin that is used when none is explicitly specified. It stores the
 captured image as a high dynamic range OpenEXR file and tries to preserve the rendering as much as
