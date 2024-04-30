@@ -1,26 +1,17 @@
 <img src="https://github.com/mitsuba-renderer/mitsuba2/raw/master/docs/images/logo_plain.png" width="120" height="120" alt="Mitsuba logo">
 
-# Mitsuba Renderer 2
-<!--
-| Documentation   | Linux             | Windows             |
-|      :---:      |       :---:       |        :---:        |
-| [![docs][1]][2] | [![rgl-ci][3]][4] | [![appveyor][5]][6] |
+# Mitsuba Renderer 2 for Transient Rendering
 
+Mitsuba 2, extended for transient path tracing based on [A framework for transient rendering](http://giga.cps.unizar.es/~ajarabo/pubs/transientSIGA14/).
 
-[1]: https://readthedocs.org/projects/mitsuba2/badge/?version=master
-[2]: https://mitsuba2.readthedocs.io/en/latest/src/getting_started/intro.html
-[3]: https://rgl-ci.epfl.ch/app/rest/builds/buildType(id:Mitsuba2_Build)/statusIcon.svg
-[4]: https://rgl-ci.epfl.ch/viewType.html?buildTypeId=Mitsuba2_Build&guest=1
-[5]: https://ci.appveyor.com/api/projects/status/eb84mmtvnt8ko8bh/branch/master?svg=true
-[6]: https://ci.appveyor.com/project/wjakob/mitsuba2/branch/master
--->
-| Documentation   |
-|      :---:      |
-| [![docs][1]][2] |
+<br><br>
+---
+> [⚠️⚠️ **Please use the new and updated Mitsuba 3 version instead!** ⚠️⚠️](https://github.com/diegoroyo/mitsuba3-transient-nlos) <br>
+> [This repository is not maintained anymore. Please check out the new version, which uses Mitsuba 3 instead of Mitsuba 2. It has much faster render times and allows to use vectorized CPU and GPU modes very easily through the use of Dr.JIT. Click here to check out the new Mitsuba 3 version.](https://github.com/diegoroyo/mitsuba3-transient-nlos)
+---
+<br><br>
 
-
-[1]: https://readthedocs.org/projects/mitsuba2/badge/?version=latest
-[2]: https://mitsuba2.readthedocs.io/en/latest/src/getting_started/intro.html
+# Introduction
 
 Mitsuba 2 is a research-oriented rendering system written in portable C++17. It
 consists of a small set of core libraries and a wide variety of plugins that
